@@ -1,0 +1,47 @@
+<head>
+    <script src="./jquery-3.5.1.js" type="text/javascript"></script>
+    <script src="./main.js" type="text/javascript"></script>
+    <style>
+        /* TODO: fix auto resizing file to div - currently it doesn't resize if smaller than div */
+        #filePlaceholder * {
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="
+    z-index: -1;
+    width:fit-content;
+    ">
+        <textarea id="command" rows="20" cols="30" placeholder="Enter command here..."
+            style="float:left; margin: 10px;">one
+one,two
+one, two, three
+one , two, three ,four</textarea>
+        <p style="width: 200px;  float:left;">Currently adding multiple tag search feature. Enter tag to
+            search per line.</p>
+        <br>
+        <input id="submitTags" style="display: block;" type="button" value="submit tags">
+        <br>
+        <input style="display: block;" type="text" width="200px" placeholder="hydrus url" id="clientURL" value="http://127.0.0.1:45869"><br>
+        <input style="display: block;" type="text" width="200px" placeholder="api key" id="clientKey"
+            value="1b1394a5ef4f2db36946ca6f0760717e135972836cc2cbaaf6dea195b2642031">
+
+    </div>
+    <div id="fileViewer" style="
+    width:200px;
+    height:200px;
+    position: absolute;
+    right:50px;
+    top:50px;">
+        <div id="filePlaceholder" style="
+        height: 200px; width: 200px;">
+            <!-- <img src="./rectangle.png"> -->
+        </div>
+        <!-- <input id="navLeft" type="button" value="<">
+        <input id="navRight" type="button" value=">"> -->
+    </div>
+
+</body>
