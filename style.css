@@ -1,0 +1,395 @@
+@import url("./three-dots.css");
+
+.dot-elastic {
+  margin: 0 auto;
+}
+
+body {
+  overflow: hidden;
+  /* disable scrollbar */
+  background-color: #141414;
+  color: white;
+  font-family: 'Tahoma', Tahoma, sans-serif;
+}
+
+button {
+  color: white;
+  font-family: 'Tahoma', Tahoma, sans-serif;
+  background-color: #0000;
+  font-size: medium;
+  width: auto;
+  margin: 5px;
+  border:none;
+}
+
+#filePlaceholder {
+  width: inherit;
+  height: inherit;
+}
+
+#fileCanvas {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  top: 0;
+  /* top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);*/
+}
+
+#fileCanvas * {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: fill;
+  user-select: none;
+  /*prevent text selection highlight over image*/
+}
+
+.leftSidebar {
+  user-select: none;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 300px;
+  background-color: #171717;
+  position: fixed !important;
+  z-index: 5;
+  box-shadow: 0px 0px 10px 6px #000;
+}
+
+#leftSidebarMenu::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar-text {
+  text-decoration-color: whitesmoke;
+}
+
+#rightHover {
+  right: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  z-index: 2;
+  position: fixed;
+}
+
+#leftHover {
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  z-index: 2;
+  position: fixed;
+}
+
+.hidden {
+  display: none;
+}
+
+#leftSidebarWrapper {
+  overflow: hidden visible;
+  height: 94%;
+  user-select: none;
+}
+
+.w3-block {
+  display: block;
+  width: 100%;
+}
+
+.menu-item {
+  padding: 0px 0px;
+  margin: 10px;
+  width: 100%;
+  border: none;
+  display: block;
+  outline: 0;
+  border: 1px solid #00000000;
+  box-sizing: border-box;
+}
+
+.menu-item p {
+  margin: 0px;
+  width: max-content;
+}
+
+.menu-item:hover {
+  background-color: #2a2a2a;
+  border: 1px solid #4c4c4c;
+  /* border-radius: 10px; */
+  box-sizing: border-box;
+}
+
+button:hover {
+  background-color: #2a2a2a;
+  box-shadow: inset 0 0 0 1px #4c4c4c;
+}
+
+.menu-item:active {
+  background-color: #4c4c4c;
+  box-sizing: border-box;
+}
+
+.menu-submenu {
+  padding: 0px 0px;
+  white-space: nowrap;
+}
+
+.menu-textbox {
+  color: black;
+  width: 90%;
+  resize: none;
+  white-space: pre;
+  margin: 10px;
+  border: none;
+  padding: 0;
+}
+
+.menu-command {
+  color: black;
+  width: 90%;
+  flex-grow: 2;
+  margin: 5px;
+  font-family: monospace;
+  font-size: medium;
+}
+
+.sidebar-draggable {
+  width: 6px;
+  height: 100%;
+  z-index: 10;
+  cursor: w-resize;
+  position: absolute;
+  right: -3px;
+  /* overflow: visible!important; */
+  /* display: flex; */
+  /* flex: 400px; */
+}
+
+#menuseperator {
+  width: 100%;
+  height: 5px;
+  background: gray;
+  cursor: n-resize;
+}
+
+
+
+#leftSidebarGallery::-webkit-scrollbar {
+  /* display: none; */
+}
+
+#thumbTable {
+  top: 5px;
+  position: relative;
+  border-spacing: 10px;
+}
+
+#thumbTable td {
+  /* width: 120px;
+    height: 140px; */
+  width: 100px;
+  height: 100px;
+}
+
+.thumbImage {
+  top: 0;
+  height: 100px;
+  width: 100px;
+  float: left;
+  margin: 5px;
+  background-color: #1f1f1f;
+}
+
+.thumbImage:hover {
+  background-color: #2a2a2a !important;
+  border: 1px solid #4c4c4c !important;
+  box-sizing: border-box;
+}
+
+.selected {
+  background-color: #2a2a2a;
+  border: 1px solid antiquewhite !important;
+  box-sizing: border-box;
+}
+
+.thumbImage img {
+  transform: translate(-50%, -50%);
+  position: relative;
+  /* height: 100%; */
+  /* width: 100%; */
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.thumbName {
+  top: 3px;
+  position: relative;
+  height: 20px;
+  /* background-color: darkgray; */
+  text-align: center;
+  vertical-align: middle;
+}
+
+.div-popout {
+  border-bottom: white;
+  border-bottom-style: solid;
+  border-bottom-width: 0.1px;
+  padding: 0 15px 15px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  overflow-x: hidden;
+  white-space: nowrap;
+}
+
+#tagnavcustomselectable p {
+  font-family: monospace;
+  padding: 5px 0;
+  margin: 0;
+  white-space: nowrap;
+  border: 1px solid #00000000;
+
+}
+
+#tagnavcustomselectable p:hover {
+  background-color: #2a2a2a;
+  border: 1px solid #4c4c4c;
+
+}
+
+
+
+.div-command {
+  display: flex;
+  flex-direction: row;
+}
+
+#leftSidebarMenu>div:nth-child(1)>p {
+  width: max-content;
+  margin: 0;
+  padding: 10px;
+}
+
+#fileCanvas img,
+#fileCanvas video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#fileCanvas audio {
+  width: 90%;
+}
+
+#dummy {
+  width: 100px;
+  height: 100px;
+  /* FIXED LENGTH HEIGHT */
+  /* top: 10000px; */
+  position: relative;
+  visibility: hidden;
+  margin: 5px;
+}
+
+#leftSidebarNav {
+  display: flex;
+  justify-content: space-evenly;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.leftSidebarNav-button {
+  padding: 10px;
+  width: 100%;
+  text-align: center;
+}
+
+#tagRepositoryList {
+  margin: 10px;
+  width: 90%;
+}
+
+#commitmsg {
+  font-size: small;
+  white-space: pre-wrap;
+}
+
+#commitmsg input {
+  width: 90%;
+
+}
+
+.tag-item {
+  padding: 0px 0px;
+  width: 100%;
+  border: none;
+  display: block;
+  outline: 0;
+  border: 1px solid #00000000;
+  box-sizing: border-box;
+}
+
+.tag-item:hover {
+  background-color: #2a2a2a;
+  border: 1px solid #4c4c4c;
+  /* border-radius: 10px; */
+  box-sizing: border-box;
+}
+
+.tag-item:active {
+  background-color: #4c4c4c;
+  box-sizing: border-box;
+}
+
+.button {
+  width: 100%;
+  border: none;
+  display: block;
+  outline: 0;
+  border: 1px solid #00000000;
+  box-sizing: border-box;
+}
+
+.button:hover {
+  background-color: #2a2a2a;
+  border: 1px solid #4c4c4c;
+  /* border-radius: 10px; */
+  box-sizing: border-box;
+}
+
+.button:active {
+  background-color: #4c4c4c;
+  box-sizing: border-box;
+}
+
+#loadingIcon {
+  border-radius: 100%;
+  border-top: 4px solid #ffffff;
+  width: 50px;
+  height: 50px;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#command {
+  height: fit-content;
+}
