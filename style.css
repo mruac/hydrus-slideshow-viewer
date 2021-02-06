@@ -314,7 +314,7 @@ table {
   text-align: center;
 }
 
-#tagRepositoryList {
+#tagRepositoryList, #displayTagToggle {
   margin: 10px;
   width: 90%;
 }
