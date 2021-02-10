@@ -55,7 +55,7 @@ $(document).ready(function () {
             //TESTME: test these situations if there are existing pending tags or not. Does it break the client?
             //TESTME: data["service_names_to_actions_to_tags"][destTagRepo.text()]["3"] = [[]];
             //TESTME: data["service_names_to_actions_to_tags"][destTagRepo.text()]["3"] = [""];
-            //TESTME: data["service_names_to_actions_to_tags"][destTagRepo.text()]["3"] = ["","",[]];
+            //TESTME: data["service_names_to_actions_to_tags"][destTagRepo.text()]["3"] = ["",[""],[]];
             toPend = [];
             toPetition = [];
             toRescindPetition = [];
@@ -118,27 +118,31 @@ $(document).ready(function () {
                 $("#committags").css("color", "lime");
                 setTimeout(() => {
                     $("#committags").css("color", "")
-                    ;
+                        ;
                 }, 2000);
-    
+
             });
         }).fail(function (response) {
             //DONE: maybe change submit button red for a second?
             $("#committags").css("color", "red");
             setTimeout(() => {
                 $("#committags").css("color", "")
-                ;
+                    ;
             }, 2000);
         });
     });
 
     $("#tagRepositoryList , #displayTagToggle").each(function (i, v) {
         $(v).on("change", function (e) {
-            loadFileTags(clientFiles[currentPos.y][currentPos.x]);
-            if ($("#tagRepositoryList :selected").text() !== "all known tags" && $("#displayTagToggle :selected").text() == "Actual Tags") {
-                $("#committags").show();
-            } else {
-                $("#committags").hide();
+            try {
+                loadFileTags(clientFiles[currentPos.y][currentPos.x]);
+                if ($("#tagRepositoryList :selected").text() !== "all known tags" && $("#displayTagToggle :selected").text() == "Actual Tags") {
+                    $("#committags").show();
+                } else {
+                    $("#committags").hide();
+                }
+            } catch {
+                $("#taglist").val("");
             }
         });
     });
@@ -159,10 +163,10 @@ $(document).ready(function () {
         });
     });
 
-    $("#filePlaceholder").append(elemIMG);
-    $("#filePlaceholder").append(elemVIDEO);
-    $("#filePlaceholder").append(elemAUDIO);
-    $("#filePlaceholder").append(elemP);
+    // $("#filePlaceholder").append(elemIMG);
+    // $("#filePlaceholder").append(elemVIDEO);
+    // $("#filePlaceholder").append(elemAUDIO);
+    // $("#filePlaceholder").append(elemP);
 
     var isResizingSidebar = false;
     $("#leftSidebarDraggable").on("mousedown", function () {
@@ -330,15 +334,30 @@ function getFileMetaData(arrayFileIDs, response) {
     });
 }
 function endFetchTags(fileMetadata) {
-    //fix for when clientFiles[0].length == 0 but clientFiles[0+x].length > 0
     clientFiles = fileMetadata;
-    if (clientFiles[0].length == 0) {
-        createElem(elemP, "No files found!");
+
+    //check if all of the searches have any results. if not: error. If there is: find the first file and load it.
+    var numberOfFiles = 0;
+    currentPos = { "x": -1, "y": -1 }
+    clientFiles.forEach((yVal, yIndex) => {
+        if (yVal.length > 0 && currentPos.y < 0) {
+            currentPos = { "x": 0, "y": yIndex }
+        }
+        numberOfFiles += yVal.length;
+    });
+    if (numberOfFiles == 0) {
+        $("#filePlaceholder").append(createElem("p", "No files found!").show());
         return;
     }
-    currentPos = { "x": 0, "y": 0 }
+
     console.log(clientFiles);
-    loadFile(clientFiles[currentPos.y][currentPos.x]);
+    $("#filePlaceholder *").remove();
+    $("#filePlaceholder").append(loadFile(navFile(-2, true)));
+    $("#filePlaceholder").append(loadFile(navFile(-1, true)));
+    $("#filePlaceholder").append(loadFile(navFile(0, true)));
+    $("#filePlaceholder").append(loadFile(navFile(1, true)));
+    $("#filePlaceholder").append(loadFile(navFile(2, true)));
+    $("#filePlaceholder *:eq(2)").show();
 }
 /*  DONE: what is currentPos if we're keeping an array of fileIDs in order?
     clientFiles[0][0] is the first (currentPos = 0), but it can go up to clientFiles[0][x] horizontally, AND vertically clientFiles[x][0]!
@@ -387,9 +406,6 @@ function loadFileTags(fileMetadata) {
 }
 
 function loadFile(fileMetadata) {
-    loadFileTags(fileMetadata);
-
-
     switch (fileMetadata.mime) {
         //Supported file thumbnails
         case 'image/jpe':
@@ -405,33 +421,20 @@ function loadFile(fileMetadata) {
         case 'image/x-icon':
         case 'image/vnd.microsoft.icon':
         case 'image':
-            createElem(elemIMG, fileMetadata);
-            break;
-
+            return createElem("img", fileMetadata);
         case 'video/mp4':
         case 'video/webm':
-            createElem(elemVIDEO, fileMetadata);
-            break;
+            return createElem("video", fileMetadata);
         case 'audio/mp3':
-            createElem(elemAUDIO, fileMetadata);
-            break;
+            return createElem("audio", fileMetadata);
         //TO BE ADDED & HAS OR DOESNT HAVE THUMBNAIL
         case 'application/x-photoshop':
         case 'application/pdf':
         case 'video/x-matroska': // VIDEO_MKV
         case 'application/zip':
         default:
-            createElem(elemP, fileMetadata);
-            break;
+            return createElem("p", `The file could not be loaded. (type: ${fileMetadata.mime})`);
     }
-
-    // console.log(fileURL);
-
-    //DONE: add support for different file types - maybe remove img src replacement method? Different methods:
-    //add the elems needed and hide/show as needed while changing the src attr. (using!)
-    //add elems with prefilled attrs and destroy elems when not needed (memory intensive - long time to reflow!) https://medium.com/swlh/what-the-heck-is-repaint-and-reflow-in-the-browser-b2d0fb980c08
-
-
 }
 
 //fill information and show element - instead of destroying and creating a new one on the fly for memory saving (reflows).
@@ -443,82 +446,68 @@ function loadFile(fileMetadata) {
 //definitely need metadata to handle preloading of different file types instead of doing it one by one
 //preload next image while user is looking at current image.
 
-function createElem(elem, file) {
-    $(".dot-elastic").show();
-    var url = clientURL + "/get_files/file?Hydrus-Client-API-Access-Key=" + clientKey + "&file_id=" + file["file_id"];
-    //prefill elem
-    if (elem == elemP) {
-        if (typeof file == 'string') { //reusing var file for string text
-            elem.text(file); //error output
-        } else {
-            elem.text(`The file could not be loaded. (type: ${file.mime})`);
+function createElem(type, content) {
+    var url = clientURL + "/get_files/file?Hydrus-Client-API-Access-Key=" + clientKey + "&file_id=" + content["file_id"];
+    switch (type) {
+        case "p":
+            return $('<p/>', {
+                'style': 'display:none;'
+            }).text(content);
+        case "img":
+            return $('<img/>', {
+                'src': url,
+                'style': 'display:none;'
+            });
+        case "video": case "audio":
+            return $(`<${type}/>`, {
+                'controls': '',
+                'src': url,
+                'style': 'display:none;'
+            });
+    }
+}
+
+//FIXME: when navFile is triggered fast enough in succession, files can be shown at the same time over on top each other!
+function navFile(increment, requireReturn) {
+    var x = currentPos.x, y = currentPos.y, incr = increment;
+    if (clientFiles[y][x + increment] == undefined) {
+        if (increment > 0) {
+            while (clientFiles[y][x + increment] == undefined) {
+                increment -= (clientFiles[y].length - x);
+                y++;
+                if (clientFiles[y] == undefined) { y = 0; }
+                x = 0;
+            }
+            x += increment;
         }
+        if (increment < 0) {
+            while (clientFiles[y][x + increment] == undefined) {
+                increment += x + 1;
+                y--;
+                if (clientFiles[y] == undefined) { y = clientFiles.length - 1; }
+                x = clientFiles[y].length - 1;
+            }
+            x += increment;
+        }
+    } else { x += increment; }
+
+    if (requireReturn) {
+        return clientFiles[y][x];
     } else {
-        elem.attr("src", url);
+        currentPos.y = y, currentPos.x = x;
+        loadFileTags(clientFiles[currentPos.y][currentPos.x]);
+        if (incr > 0) {
+            $("#filePlaceholder *").hide();
+            $("#filePlaceholder *:first").remove();
+            $("#filePlaceholder").append(loadFile(navFile(2, true)));
+            $("#filePlaceholder *:eq(2)").show();
+        } else if (incr < 0) {
+            $("#filePlaceholder *").hide();
+            $("#filePlaceholder *:last").remove();
+            $("#filePlaceholder").prepend(loadFile(navFile(-2, true)));
+            $("#filePlaceholder *:eq(2)").show();
+        }
     }
-
-    //show elem (skip if already visible)
-    // if (!$(elem).is(":visible")) {
-    // if ($("#filePlaceholder *:visible").is(elemP)) {
-    //     elemP.text("");
-    // } else {
-    //     // $("#filePlaceholder *:visible").attr("src", ""); //clears src so that when switching from elemX > elemY it does not show elemY's previous src when elemY is shown again
-    // }
-    $("#filePlaceholder *:visible").hide();
-    if (elem == elemP) {
-        $(".dot-elastic").hide();
-        $(elem).show();
-    }
-    // }
-}
-
-//DONE: fix nav so that it works with currentPos.x and y
-//if (x < 0){x = 0; y--; if(y < 0){y = currentPos.length-1;}} //previous tag set
-//if (x >= currentPos.[0].length){x = 0; y = y++; if (y >= currentPos.length){y = 0;}} //next tag set
-//bug: tag searches can return an empty array [] and break this. hacky fix: check if the new position returns undefined and move onto the next one if it does.
-function navNextFile(requireReturn, x, y) {
-    try {
-        if (typeof x == "undefined" && typeof y == "undefined") {
-            var x = currentPos.x;
-            var y = currentPos.y;
-        }
-        x++;
-        if (x >= clientFiles[y].length) {
-            x = 0;
-            y++;
-            if (y >= clientFiles.length) {
-                y = 0;
-            }
-        }
-        if (clientFiles[y][x] == undefined) { navNextFile(requireReturn, x, y) }
-        if (requireReturn) { return clientFiles[y][x]; } else {
-            currentPos.x = x;
-            currentPos.y = y;
-            loadFile(clientFiles[currentPos.y][currentPos.x]);
-        }
-    } catch { }
-}
-function navPrevFile(requireReturn, x, y) {
-    try {
-        if (typeof x == "undefined" && typeof y == "undefined") {
-            var x = currentPos.x;
-            var y = currentPos.y;
-        }
-        x--;
-        if (x < 0) {
-            y--;
-            if (y < 0) {
-                y = clientFiles.length - 1;
-            }
-            x = clientFiles[y].length - 1;
-        }
-        if (clientFiles[y][x] == undefined) { navPrevFile(requireReturn, x, y) }
-        if (requireReturn) { return clientFiles[y][x]; } else {
-            currentPos.x = x;
-            currentPos.y = y;
-            loadFile(clientFiles[currentPos.y][currentPos.x]);
-        }
-    } catch { }
 }
 
 function navRandomFile() {
@@ -530,17 +519,15 @@ function navRandomFile() {
     } catch { }
 }
 
-// DONE: add button, mouse scroll & keyboard naviagation -- removed click nav
-//TODO: ignore nav on text inputs / textareas
 //keyboard nav
 $(document).keyup((event) => {
     if ($(".leftSidebar").find(event.target)[0]) { return; }
     // console.log(event.target);
     if (event.which == 37) { //left
-        navPrevFile();
+        navFile(-1);
     }
     else if (event.which == 39) { //right
-        navNextFile();
+        navFile(1);
     }
 });
 
@@ -550,10 +537,10 @@ $(document).bind('mousewheel', function (event) {
     // console.log(event.target);
 
     if (event.originalEvent.wheelDelta / 120 > 0) {//scroll up
-        navPrevFile();
+        navFile(-1);
     }
     else { //scroll down
-        navNextFile();
+        navFile(1);
     }
 });
 
