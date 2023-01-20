@@ -15,13 +15,13 @@
  */
 .dot-elastic {
   position: relative;
-  width: 5px;
-  height: 5px;
-  border-radius: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
   background-color: #ffffff;
   color: #ffffff;
-  -webkit-animation: dot-elastic 1s infinite linear;
-  animation: dot-elastic 1s infinite linear;
+  -webkit-animation: dot-elastic 2s infinite linear;
+  animation: dot-elastic 2s infinite linear;
 }
 
 .dot-elastic::before, .dot-elastic::after {
@@ -33,24 +33,24 @@
 
 .dot-elastic::before {
   left: -15px;
-  width: 5px;
-  height: 5px;
-  border-radius: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
   background-color: #ffffff;
   color: #ffffff;
-  -webkit-animation: dot-elastic-before 1s infinite linear;
-  animation: dot-elastic-before 1s infinite linear;
+  -webkit-animation: dot-elastic-before 2s infinite linear;
+  animation: dot-elastic-before 2s infinite linear;
 }
 
 .dot-elastic::after {
   left: 15px;
-  width: 5px;
-  height: 5px;
-  border-radius: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
   background-color: #ffffff;
   color: #ffffff;
-  -webkit-animation: dot-elastic-after 1s infinite linear;
-  animation: dot-elastic-after 1s infinite linear;
+  -webkit-animation: dot-elastic-after 2s infinite linear;
+  animation: dot-elastic-after 2s infinite linear;
 }
 
 @-webkit-keyframes dot-elastic-before {

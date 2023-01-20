@@ -1,0 +1,165 @@
+import * as file from "./file_functions.js";
+import * as tag from "./tag_functions.js";
+import * as ui from "./ui_functions.js";
+import * as g from "./main.js";
+
+export var currentPos = { "x": 0, "y": 0 };
+
+
+
+export function createElem(type, content) {
+    const url = `${g.clientURL}/get_files/file?Hydrus-Client-API-Access-Key=${g.clientKey}&file_id=${content["file_id"]}`;
+    switch (type) {
+        case "p":
+            return $('<p/>', {
+            }).text(content);
+        case "img":
+            return $('<img/>', {
+                'src': url,
+            });
+        case "video": case "audio":
+            return $(`<${type}/>`, {
+                'controls': '',
+                'src': url
+            });
+    }
+}
+
+//FIXME: when navFile is triggered fast enough in succession, files can be shown at the same time over on top each other!
+export function navFile(increment, requireReturn = false) {
+    let x = currentPos.x, y = currentPos.y;
+    // console.log(`loading [${y}][${x}]`)
+
+    if (increment != 0) {
+        //sets x,y to the new position when factoring the increment in
+        let tmpincrement = increment;
+        if (increment > 0) { //+
+            while (!((x + tmpincrement) > -1 && (x + tmpincrement) < g.clientFiles[y].length)) { //NOT (while X is LESS THAN the length of Y) - tests whether X is NOT within the boundaries of Y
+                tmpincrement = tmpincrement - (g.clientFiles[y].length - x);
+                if (y >= (g.clientFiles.length - 1)) { y = 0; } else { y++; }
+                x = 0;
+            } //sets X to next forward possible file, looping around if X is greater than the current search (Y)'s number of files
+        } else {//-
+            //BUG:increment goes from -5 to -6, causes endless loop
+            //{"y": 0, "x": 0 } incr = -1
+            //[ [14], [1] ]
+            while (!((x + tmpincrement) > -1 && (x + tmpincrement) < g.clientFiles[y].length)) { //NOT (while X is GREATHER THAN 0) - tests whether X is NOT less than Y
+                tmpincrement = tmpincrement + (x + 1);
+
+                if (y <= 0) { y = g.clientFiles.length - 1; } else { y--; }
+                // debugger;
+                x = g.clientFiles[y].length - 1;
+            } //sets X to next previous possible file, looping around if X is goes less than current search (Y)'s number of files
+        }
+
+        x = x + tmpincrement;
+    }
+
+    if (g.clientFiles?.[y]?.[x] === undefined) {
+        console.error(`Something went wrong while returning navFile(${increment}, ${requireReturn}), where the currentPos is ${JSON.stringify(currentPos)}`);
+        return;
+    }
+
+    if (requireReturn) {
+        // console.debug(`returned [${y}][${x}]`)
+        return g.clientFiles[y][x];
+    } else {
+        currentPos.y = y, currentPos.x = x;
+        ui.loadFileTags(g.clientFiles[currentPos.y][currentPos.x]);
+        ui.loadFileNotes(file.navFile(0, true));
+        ui.loadFileMetadata(file.navFile(0, true));
+        ui.update_currentPos_display();
+
+        console.debug(`loaded [${y}][${x}]`)
+
+        //TODO: CSS Transform with JS in px depending on viewport dims NOT %. For testing 999999px is used for now.
+        const filePlaceholder = $("#filePlaceholder").children();
+        //filePlaceholder[i] = find the one that is hidden
+        let i = $(".visible").index();
+
+        const num_files_preload_batch = Math.floor(ui.num_files_preload / 2);
+
+        if (increment > 0) {//+
+            //check if ["elem"] exists, if not, preload around it
+
+            //preload next batch of  files if there is navFile(25, true)["elem"] === undefined
+            if ((navFile(num_files_preload_batch, true)["elem"] === undefined)
+            ) {
+                for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
+                    const metadata = file.navFile((index), true);
+                    metadata["elem"] = ui.loadFile(metadata)
+                }
+                console.debug(`preloaded next ${num_files_preload_batch} files`)
+            }
+
+            //hide filePlaceholder[i], show next file in the next elem, load the file after in the elem after.
+            if (increment === 1) {
+                $(filePlaceholder[i]).removeClass("visible").addClass("hidden");
+                if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
+                $(filePlaceholder[i]).removeClass("hidden").addClass("visible");
+                if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
+                $(filePlaceholder[i].children[0]).remove();
+                $(filePlaceholder[i]).append(navFile(1, true)["elem"]);
+            } else {
+                jumpToFile(currentPos.y, currentPos.x);
+            }
+
+        } else if (increment < 0) {//-
+            if ((navFile(-(num_files_preload_batch), true)["elem"] === undefined)
+            ) {
+                for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
+                    const metadata = file.navFile(-(index), true);
+                    metadata["elem"] = ui.loadFile(metadata)
+                }
+                console.debug(`preloaded next ${num_files_preload_batch} files`)
+            }
+
+            if (increment === -1) {
+                $(filePlaceholder[i]).removeClass("visible").addClass("hidden");
+                if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
+                $(filePlaceholder[i]).removeClass("hidden").addClass("visible");
+                if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
+                $(filePlaceholder[i].children[0]).remove();
+                $(filePlaceholder[i]).append(navFile(-1, true)["elem"]);
+            } else {
+                jumpToFile(currentPos.y, currentPos.x);
+            }
+
+        }
+    }
+}
+
+export function navRandomFile() {
+    // try {
+    currentPos.y = Math.floor(Math.random() * g.clientFiles.length);
+    currentPos.x = Math.floor(Math.random() * g.clientFiles[currentPos.y].length);
+
+    for (let index = -(ui.num_files_preload); index <= ui.num_files_preload; index++) {
+        const metadata = file.navFile(index, true);
+        if (metadata["elem"] === undefined) {
+            metadata["elem"] = ui.loadFile(metadata)
+        }
+    }
+    console.log(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
+
+    tag.loadFiles();
+
+    // } catch { }
+}
+
+export function jumpToFile(search_number = 0, file_number = 0) {
+    if (search_number > g.clientFiles.length) { search_number = g.clientFiles.length - 1 }
+    if (file_number > g.clientFiles[search_number].length) { file_number = g.clientFiles[search_number].length - 1 }
+    currentPos.x = file_number;
+    currentPos.y = search_number;
+    for (let index = -(ui.num_files_preload); index <= ui.num_files_preload; index++) {
+        const metadata = file.navFile(index, true);
+        if (metadata["elem"] === undefined) {
+            metadata["elem"] = ui.loadFile(metadata)
+        }
+    }
+    console.log(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
+
+    tag.loadFiles();
+
+}

@@ -1,4 +1,4 @@
-@import url("./three-dots.css");
+@import url('./three-dots.css');
 
 .dot-elastic {
   margin: 0 auto;
@@ -10,6 +10,7 @@ body {
   background-color: #141414;
   color: white;
   font-family: 'Tahoma', Tahoma, sans-serif;
+  margin: 0;
 }
 
 button {
@@ -19,33 +20,47 @@ button {
   font-size: medium;
   width: auto;
   margin: 5px;
-  border:none;
+  border: none;
 }
 
 #filePlaceholder {
-  width: inherit;
-  height: inherit;
+  width: 100%;
+  height: 100%;
 }
 
 #fileCanvas {
-  position: fixed;
-  height: 100%;
+  /* position: absolute; */
+  height: 100vh;
   width: 100%;
-  left: 0;
-  top: 0;
+  /* left: 0; */
+  /* top: 0; */
   /* top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);*/
 }
 
-#fileCanvas * {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  object-fit: fill;
+#filePlaceholder * {
+  /* top: 50%; */
+  /* left: 50%; */
+  /* transform: translate(-50%, -50%); */
+  /* object-fit: fill; */
   user-select: none;
   /*prevent text selection highlight over image*/
+  /* position: fixed; */
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  margin: auto;
+  /* width: 100%; */
+  /* height: 100%; */
+  /* object-fit: contain; */
+}
+
+#filePlaceholder * p {
+  text-align: center;
+    height: fit-content;
 }
 
 .leftSidebar {
@@ -61,6 +76,22 @@ button {
 }
 
 #leftSidebarMenu::-webkit-scrollbar {
+  display: none;
+}
+
+.rightSidebar {
+  user-select: none;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 300px;
+  background-color: #171717;
+  position: fixed !important;
+  z-index: 5;
+  box-shadow: 0px 0px 10px 6px #000;
+}
+
+#rightSidebarMenu::-webkit-scrollbar {
   display: none;
 }
 
@@ -90,9 +121,10 @@ button {
   display: none;
 }
 
-#leftSidebarWrapper {
+#leftSidebarWrapper,
+#rightSidebarWrapper {
   overflow: hidden visible;
-  height: 94%;
+  height: 100%;
   user-select: none;
 }
 
@@ -104,9 +136,8 @@ button {
 .menu-item {
   padding: 0px 0px;
   margin: 10px;
-  width: 100%;
+  /* width: 100%; */
   border: none;
-  display: block;
   outline: 0;
   border: 1px solid #00000000;
   box-sizing: border-box;
@@ -140,9 +171,9 @@ button:hover {
 }
 
 .menu-textbox {
-  color: black;
+  /* color: black; */
   width: 90%;
-  resize: none;
+  resize: vertical;
   white-space: pre;
   margin: 10px;
   border: none;
@@ -158,16 +189,22 @@ button:hover {
   font-size: medium;
 }
 
-.sidebar-draggable {
+#leftSidebarDraggable {
   width: 6px;
   height: 100%;
   z-index: 10;
   cursor: w-resize;
   position: absolute;
-  right: -3px;
-  /* overflow: visible!important; */
-  /* display: flex; */
-  /* flex: 400px; */
+  right: -6px;
+}
+
+#rightSidebarDraggable {
+  width: 6px;
+  height: 100%;
+  z-index: 10;
+  cursor: w-resize;
+  position: absolute;
+  left: -6px;
 }
 
 #menuseperator {
@@ -176,8 +213,6 @@ button:hover {
   background: gray;
   cursor: n-resize;
 }
-
-
 
 #leftSidebarGallery::-webkit-scrollbar {
   /* display: none; */
@@ -252,32 +287,47 @@ table {
   white-space: nowrap;
 }
 
+.mono {
+  font-family: monospace;
+  user-select: text;
+}
+
+#file_info_notefield {
+  white-space: pre-wrap;
+  font-family: Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans,
+    Tahoma, sans-serif;
+  overflow-y: auto;
+  resize: vertical;
+  height: 300px;
+}
+
 #tagnavcustomselectable p {
   font-family: monospace;
   padding: 5px 0;
   margin: 0;
   white-space: nowrap;
   border: 1px solid #00000000;
-
 }
 
 #tagnavcustomselectable p:hover {
   background-color: #2a2a2a;
   border: 1px solid #4c4c4c;
-
 }
-
-
 
 .div-command {
-  display: flex;
-  flex-direction: row;
+  /* display: flex; */
+  /* flex-direction: row; */
+  align-content: flex-start;
 }
 
-#leftSidebarMenu>div:nth-child(1)>p {
+#leftSidebarMenu > div:nth-child(1) > p {
   width: max-content;
   margin: 0;
   padding: 10px;
+}
+
+#leftSidebarMenu {
+  height: 100%;
 }
 
 #fileCanvas img,
@@ -314,7 +364,7 @@ table {
   text-align: center;
 }
 
-#tagRepositoryList, #displayTagToggle {
+.input-field {
   margin: 10px;
   width: 90%;
 }
@@ -326,7 +376,6 @@ table {
 
 #commitmsg input {
   width: 90%;
-
 }
 
 .tag-item {
