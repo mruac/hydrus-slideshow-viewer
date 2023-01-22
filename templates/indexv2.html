@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<head>
+    <title>Hydrus slideshow viewer</title>
+    <script src="./static/jquery-3.5.1.js" type="module"></script>
+    <script src="/static/anvaka_panzoom.js"></script>
+    <script src="./static/ui_functions.js" type="module"></script>
+    <script src="./static/file_functions.js" type="module"></script>
+    <script src="./static/tag_functions.js" type="module"></script>
+    <script src="./static/main.js" type="module"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous" />
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" /> -->
+    <link rel="stylesheet" type="text/css" href="./static/style.css" />
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        .visible {
+            display: contents;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="offcanvas offcanvas-start leftSidebar" data-bs-scroll="true" data-bs-backdrop="false" id="leftSidebar">
+        <div id="leftSidebarDraggable" class="sidebar-draggable"></div>
+        <!--  -->
+        <div class="accordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header d-flex justify-content-between" id="file_tag_label">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#file_tag_panel" aria-expanded="false" aria-controls="file_tag_panel">
+                        Search</button><button type="button" class="btn-close m-2" data-bs-dismiss="offcanvas"
+                        aria-label="Close"></button>
+                </h2>
+                <div id="file_tag_panel" class="accordion-collapse collapse show" aria-labelledby="file_tag_label">
+                    <div class="accordion-body">
+                        <textarea id="command" class="menu-textbox font-monospace form-control mb-3" rows="5"
+                            spellcheck="false"
+                            placeholder='JS array compliant tag search per line...&#10;["tag1","tag1a"]&#10;["tag2 electric boogaloo", ["tag1","tag1a"] ]'></textarea>
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="sort_order">
+                                <option value="0">file size - smallest first</option>
+                                <option value="1">file size - largest first</option>
+                                <option value="2">duration - shortest first</option>
+                                <option value="3">duration - longest first</option>
+                                <option value="4">import time - oldest first</option>
+                                <option value="5" selected>import time - newest first</option>
+                                <option value="6">filetype</option>
+                                <option value="7">random</option>
+                                <option value="8">width - slimmest first</option>
+                                <option value="9">width - widest first</option>
+                                <option value="10">height - shortest first</option>
+                                <option value="11">height - tallest first</option>
+                                <option value="12">ratio - tallest first</option>
+                                <option value="13">ratio - widest first</option>
+                                <option value="14">number of pixels - ascending</option>
+                                <option value="15">number of pixels - descending</option>
+                                <option value="16">number of tags - ascending</option>
+                                <option value="17">number of tags - descending</option>
+                                <option value="18">number of media views - ascending</option>
+                                <option value="19">number of media views - descending</option>
+                                <option value="20">total media viewtime - ascending</option>
+                                <option value="21">total media viewtime - descending</option>
+                                <option value="22">
+                                    approximate bitrate - smallest first
+                                </option>
+                                <option value="23">
+                                    approximate bitrate - largest first
+                                </option>
+                                <option value="24">has audio - audio first</option>
+                                <option value="25">has audio - silent first</option>
+                                <option value="26">modified time - oldest first</option>
+                                <option value="27">modified time - newest first</option>
+                                <option value="28">framerate - slowest first</option>
+                                <option value="29">framerate - fastest first</option>
+                                <option value="30">number of frames - smallest first</option>
+                                <option value="31">number of frames - largest first</option>
+                                <option value="32">last viewed time - oldest first</option>
+                                <option value="33">last viewed time - newest first</option>
+                                <option value="34">archive timestamp - oldest first</option>
+                                <option value="35">archive timestamp - newest first</option>
+                                <option value="36">hash hex</option>
+                                <option value="37">namespace sort</option>
+                                <option value="38">namespace sort - reversed</option>
+                            </select>
+                            <label for="sort_order">Sort order</label>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="submitButton">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <p class="accordion-button-label" title="SEARCH_STRING_HERE" id="currentPos_display_string">
+                    Showing file [<span id="file_no">xxx</span>/<span id="file_length">XXX</span>] of search no. <span
+                        id="search_no">XXX</span>
+                </p>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="current_tags_label">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#current_tags_panel" aria-expanded="false" aria-controls="current_tags_panel">
+                        Current File tags
+                    </button>
+                </h2>
+                <div id="current_tags_panel" class="accordion-collapse collapse" aria-labelledby="current_tags_label">
+                    <div class="accordion-body">
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="tagRepositoryList"></select>
+                            <label for="tagRepositoryList">Tag services</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="displayTagToggle">
+                                <option value="display">Display tags</option>
+                                <option value="storage">Actual tags</option>
+                            </select>
+                            <label for="displayTagToggle">Tags presented as:</label>
+                        </div>
+                        <textarea id="taglist" rows="20" class="menu-textbox form-control mb-3""
+                placeholder='Tags...&#13;" Submit" to commit to current file.&#13;Remote tag services not supported.'
+                            readonly="readonly"></textarea>
+                        <button type="button" class="btn btn-secondary" id="committags"
+                            style="display: none">Submit</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="navigation_label">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#navigation_panel" aria-expanded="false" aria-controls="navigation_panel">
+                        Navigation
+                    </button>
+                </h2>
+                <div id="navigation_panel" class="accordion-collapse collapse" aria-labelledby="navigation_label">
+                    <div class="accordion-body">
+                        <button type="button" class="btn btn-secondary" id="file_previous">Previous</button>
+                        <button type="button" class="btn btn-secondary mx-3" id="file_next">Next</button>
+                        <div class="accordion mt-3">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="file_nav_other_label">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#file_nav_other_panel" aria-expanded="true"
+                                        aria-controls="file_nav_other_panel">
+                                        Other Navigation:
+                                    </button>
+                                </h2>
+                                <div id="file_nav_other_panel" class="accordion-collapse collapse show"
+                                    aria-labelledby="file_nav_other_label">
+                                    <div class="accordion-body">
+                                        <div>
+                                            <label for="jump_files_by">Skip files by:</label>
+
+                                            <div class="input-group mb-3">
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                    id="file_jump_previous">&laquo;</button>
+
+                                                <input type="number" class="m-0 form-control menu-command"
+                                                    id="jump_files_by" value="1" min="1"
+                                                    aria-label="Number of files to skip by:">
+
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                    id="file_jump_next">&raquo;</button>
+                                            </div>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <label class="input-group-text" for="jump_to_search_number">Search
+                                                no.</label>
+                                            <input class="form-control" type="number" id="jump_to_search_number"
+                                                value="1" min="1">
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <label class="input-group-text" for="jump_to_file_number">File no.</label>
+                                            <input class="form-control" type="number" value="1" min="1"
+                                                id="jump_to_file_number">
+                                        </div>
+                                        <button type="button" class="btn btn-secondary" id="submit_jump">Jump!</button>
+                                        <button type="button" class="btn btn-secondary mx-3"
+                                            id="file_random">Random</button>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="settings_label">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#settings_panel" aria-expanded="false" aria-controls="settings_panel">
+                        Settings
+                    </button>
+                </h2>
+                <div id="settings_panel" class="accordion-collapse collapse" aria-labelledby="settings_label">
+                    <div class="accordion-body">
+                        <div class="mb-3">
+                            <label class="form-label">Hydrus Client API:</label>
+                            <div class="input-group mb-2">
+                                <label for="clientURL" class="input-group-text">URL</label>
+                                <input type="text" class="form-control" id="clientURL">
+                            </div>
+                            <div class="input-group mb-2">
+                                <label for="clientKey" class="input-group-text">Access key</label>
+                                <input type="text" class="form-control" id="clientKey">
+                            </div>
+                            <p>Status: <span id="clientStatus">...</span></p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">App settings:</label>
+                            <div class="input-group mb-2">
+                                <label for="sidebarDelay" class="input-group-text">Hide UI delay (ms)</label>
+                                <input type="number" id="sidebarDelay" class="form-control" value="2000" min="200"
+                                    max="2147483647" />
+                            </div>
+                            <div class="form-floating mb-2">
+                                <input type="text" id="custom_namespace" class="form-control"
+                                    value="creator-series-title-volume-chapter-page" />
+                                <label for="custom_namespace">Custom namespace</label>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--  -->
+
+    </div>
+
+    <div class="offcanvas offcanvas-end rightSidebar" data-bs-backdrop="false" data-bs-scroll="true" tabindex="-1"
+        id="rightSidebar" aria-labelledby="rightSidebarLabel">
+        <div id="rightSidebarDraggable" class="sidebar-draggable"></div>
+        <div class="accordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header d-flex justify-content-between" id="file_info_label">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#file_info_panel" aria-expanded="false" aria-controls="file_info_panel">
+                        File information</button><button type="button" class="btn-close m-2" data-bs-dismiss="offcanvas"
+                        aria-label="Close"></button>
+                </h2>
+                <div id="file_info_panel" class="accordion-collapse collapse" aria-labelledby="file_info_label"
+                    style="">
+                    <div class="accordion-body">
+                        <div>
+                            <label for="file_info_hash">Hash:</label>
+                            <p id="file_info_hash" class="mono"></p>
+                        </div>
+                        <div>
+                            <label for="file_info_urls">Known URLs:</label>
+                            <p id="file_info_urls" class="mono"></p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="notes_label">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#notes_panel" aria-expanded="false" aria-controls="notes_panel">
+                        Notes</button>
+                </h2>
+                <div id="notes_panel" class="accordion-collapse collapse" aria-labelledby="notes_label" style="">
+                    <div class="accordion-body">
+                        <select id="file_info_notes" class="input-field"></select>
+                        <p id="file_info_notefield"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="zoom_label">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#zoom_panel" aria-expanded="false" aria-controls="zoom_panel">
+                        Zoom</button>
+                </h2>
+                <div id="zoom_panel" class="accordion-collapse collapse" aria-labelledby="zoom_label" style="">
+                    <div class="accordion-body">
+                        <label for="panzoom" class="menu-item">Enable Zoom: </label><input type="checkbox"
+                            id="panzoom"><br>
+                        <label for="panzoom_persist" class="menu-item">Persist Zoom: </label><input type="checkbox"
+                            id="panzoom_persist">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="z-1 position-sticky btn btn-primary float-start m-2" type="button" data-bs-toggle="offcanvas"
+        data-bs-target="#leftSidebar" aria-controls="leftSidebar" id="leftSidebarToggle">
+        App
+    </button>
+    <button class="z-1 position-sticky btn btn-primary float-end m-2" type="button" data-bs-toggle="offcanvas"
+        data-bs-target="#rightSidebar" aria-controls="rightSidebar" id="rightSidebarToggle">
+        Info
+    </button>
+    <input class="btn-check" id="zoomToggle" type="checkbox" class="btn-check" autocomplete="off"
+        aria-controls="zoomToggle">
+    <label class="z-1 position-fixed bottom-0 end-0 m-2 btn btn-outline-primary" for="zoomToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search"
+            viewBox="0 0 16 16" data-darkreader-inline-fill="" style="--darkreader-inline-fill:currentColor;">
+            <path
+                d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z">
+            </path>
+        </svg>
+    </label>
+
+
+    <div id="fileCanvas">
+        <div id="filePlaceholder" class="swiper-wrapper">
+        </div>
+        <div class="dot-flashing position-absolute top-50 start-50 translate-middle" style="display: none"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+        crossorigin="anonymous"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script> -->
+
+</body>
+
+</html>

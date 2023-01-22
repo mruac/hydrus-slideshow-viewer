@@ -7,20 +7,19 @@
 body {
   overflow: hidden;
   /* disable scrollbar */
-  background-color: #141414;
+  background-color: var(--bs-dark);
   color: white;
-  font-family: 'Tahoma', Tahoma, sans-serif;
   margin: 0;
 }
 
 button {
-  color: white;
-  font-family: 'Tahoma', Tahoma, sans-serif;
-  background-color: #0000;
-  font-size: medium;
-  width: auto;
-  margin: 5px;
-  border: none;
+  /* color: white; */
+  /* font-family: 'Tahoma', Tahoma, sans-serif; */
+  /* background-color: #0000; */
+  /* font-size: medium; */
+  /* width: auto; */
+  /* margin: 5px; */
+  /* border: none; */
 }
 
 #filePlaceholder {
@@ -39,11 +38,16 @@ button {
     transform: translate(-50%, -50%);*/
 }
 
+#fileCanvas:focus-visible {
+outline:0;
+}
+
 #filePlaceholder * {
   /* top: 50%; */
   /* left: 50%; */
   /* transform: translate(-50%, -50%); */
   /* object-fit: fill; */
+  user-drag: none;
   user-select: none;
   /*prevent text selection highlight over image*/
   /* position: fixed; */
@@ -60,7 +64,13 @@ button {
 
 #filePlaceholder * p {
   text-align: center;
-    height: fit-content;
+  height: 0;
+  margin: 0;
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
 }
 
 .leftSidebar {
@@ -68,11 +78,13 @@ button {
   top: 0;
   left: 0;
   height: 100%;
-  width: 300px;
-  background-color: #171717;
+  width: 40%;
+  background-color: var(--bs-black);
   position: fixed !important;
-  z-index: 5;
+  /* z-index: 5; */
   box-shadow: 0px 0px 10px 6px #000;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 #leftSidebarMenu::-webkit-scrollbar {
@@ -84,12 +96,16 @@ button {
   top: 0;
   right: 0;
   height: 100%;
-  width: 300px;
+  width: 40%;
   background-color: #171717;
   position: fixed !important;
   z-index: 5;
+  overflow-y: auto;
   box-shadow: 0px 0px 10px 6px #000;
+  white-space: nowrap;
 }
+
+div#rightSidebar {}
 
 #rightSidebarMenu::-webkit-scrollbar {
   display: none;
@@ -133,10 +149,14 @@ button {
   width: 100%;
 }
 
+.menu-label {
+  padding: 0px 0px;
+  margin: 10px;
+}
+
 .menu-item {
   padding: 0px 0px;
   margin: 10px;
-  /* width: 100%; */
   border: none;
   outline: 0;
   border: 1px solid #00000000;
@@ -172,12 +192,13 @@ button:hover {
 
 .menu-textbox {
   /* color: black; */
-  width: 90%;
+  width: 100%;
   resize: vertical;
   white-space: pre;
-  margin: 10px;
-  border: none;
-  padding: 0;
+  /* margin: 10px; */
+  /* border: none; */
+  /* padding: 0; */
+  height: 10%;
 }
 
 .menu-command {
@@ -195,16 +216,18 @@ button:hover {
   z-index: 10;
   cursor: w-resize;
   position: absolute;
-  right: -6px;
+  /* right: -6px; */
+  right: 0;
+  /* transform: translate(86%,0%); */
 }
 
 #rightSidebarDraggable {
   width: 6px;
-  height: 100%;
+  height: 500%;
   z-index: 10;
   cursor: w-resize;
   position: absolute;
-  left: -6px;
+  left: 0;
 }
 
 #menuseperator {
@@ -288,14 +311,14 @@ table {
 }
 
 .mono {
-  font-family: monospace;
+  font-family: var(--bs-font-monospace);
   user-select: text;
 }
 
 #file_info_notefield {
   white-space: pre-wrap;
-  font-family: Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans,
-    Tahoma, sans-serif;
+  /* font-family: Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans,
+    Tahoma, sans-serif; */
   overflow-y: auto;
   resize: vertical;
   height: 300px;
@@ -317,7 +340,7 @@ table {
 .div-command {
   /* display: flex; */
   /* flex-direction: row; */
-  align-content: flex-start;
+  /* align-content: flex-start; */
 }
 
 #leftSidebarMenu > div:nth-child(1) > p {
@@ -335,6 +358,12 @@ table {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  user-drag: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 #fileCanvas audio {
@@ -441,4 +470,23 @@ table {
 
 #command {
   height: fit-content;
+}
+
+
+.accordion-button-label {
+  position: relative;
+  /* display: flex; */
+  /* align-items: center; */
+  width: 100%;
+  padding: var(--bs-accordion-btn-padding-y) var(--bs-accordion-btn-padding-x);
+  font-size: 1rem;
+  /* color: var(--bs-accordion-btn-color); */
+  text-align: left;
+  /* background-color: var(--bs-accordion-btn-bg); */
+  /* border: 0; */
+  /* border-radius: 0; */
+  /* overflow-anchor: none; */
+  /* transition: var(--bs-accordion-transition); */
+  margin: inherit;
+  font-weight: normal;
 }

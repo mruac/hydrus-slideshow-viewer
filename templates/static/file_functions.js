@@ -20,6 +20,7 @@ export function createElem(type, content) {
         case "video": case "audio":
             return $(`<${type}/>`, {
                 'controls': '',
+                'loop': '',
                 'src': url
             });
     }

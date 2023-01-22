@@ -130,7 +130,7 @@ export function update_currentPos_display() {
     $("#currentPos_display_string").attr("title", $("#command").val().split("\n").filter(tag => tag.trim().length > 0)[file.currentPos.y]);
     $("#file_no").text(file.currentPos.x + 1);
     $("#file_length").text(g.clientFiles[file.currentPos.y].length);
-    $("#search_no").text(file.currentPos.y);
+    $("#search_no").text(file.currentPos.y + 1);
 }
 
 export function loadFileTags(metadata) {

@@ -80,7 +80,7 @@ export function commitTags() {
         $.ajax({
             url: g.clientURL + `/get_files/file_metadata`,
             data: {
-                "file_id": g.clientFiles[file.currentPos.y][file.currentPos.x]?.["file_id"],
+                "hash": g.clientFiles[file.currentPos.y][file.currentPos.x]?.["hash"],
                 "include_notes": true
             },
             dataType: 'json',
@@ -105,7 +105,7 @@ export function loadFiles() {
 
     $("#filePlaceholder div *").remove();
 
-    $(".dot-elastic").hide();
+    $(".dot-flashing").hide();
 
     ui.loadFileTags(file.navFile(0, true));
     ui.loadFileNotes(file.navFile(0, true));
@@ -117,14 +117,14 @@ export function loadFiles() {
 
     if (numberOfFiles < 3) {
         for (let index = 0; index < numberOfFiles; index++) {
-            const elem = $("<div/>", { "id": `filePlaceholder${index}` });
+            const elem = $("<div/>", { "id": `filePlaceholder${index}`, "class":"swiper-slide" });
             elem.append(file.navFile(index, true)["elem"]);
             if (index === 0) { elem.addClass("visible"); } else { elem.addClass("hidden"); }
             file_placeholder.append(elem);
         }
     } else {
         for (let index = 0; index < 3; index++) {
-            const elem = $("<div/>", { "id": `filePlaceholder${index}` });
+            const elem = $("<div/>", { "id": `filePlaceholder${index}`, "class":"swiper-slide" });
             elem.append(file.navFile(index - 1, true)["elem"]);
             if (index - 1 === 0) { elem.addClass("visible"); } else { elem.addClass("hidden"); }
             file_placeholder.append(elem);
