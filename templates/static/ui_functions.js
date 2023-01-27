@@ -4,11 +4,14 @@ import * as ui from "./ui_functions.js";
 import * as g from "./main.js";
 
 export const num_files_preload = 20;
+let job_id = 0;
 
 //get fileIDs from a tag search
 export function getFileMetaData(searches, order_type = 2, order = false) {
-    //CUSTOM NAMESPACE SORTING
+    job_id++;
+    const getFileMetaData_job_id = job_id;
     let doNamespaceSort = false;
+
     if (order_type === 100) {
         doNamespaceSort = true;
         order_type = 2;
@@ -16,6 +19,8 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
 
     let i = 0;
     function next() {
+        if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
+
         if (i < searches.length) {
             const data = {
                 "tags": JSON.stringify(searches[i]),
@@ -29,6 +34,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 data: data,
                 dataType: 'json'
             }).done(function (response) {
+                if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
                 $.ajax({
                     crossDomain: true,
                     method: "GET",
@@ -39,49 +45,58 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                     },
                     dataType: 'json'
                 }).done(function (response) {
+                    if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
+
                     searches[i] = response.metadata;
 
                     i++;
+                    $("#progress_bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
 
                     //recurse with the next search
                     next();
                 }).fail(() => {
+                    g.loading_error();
                     g.error_textInput($("#command"));
                 });
             }).fail(() => {
+                g.loading_error();
                 g.error_textInput($("#command"));
             });
         } else {
-            // last one done, process the metadatas for each search
-            let numberOfFiles = 0;
-            for (let index = 0; index < searches.length; index++) {
-                numberOfFiles += searches[index].length;
-                if (searches[index].length === 0) { searches[index] = [{ "mime": "no_file" }]; }
-            }
+            try {
 
-            if (doNamespaceSort) {
-                for (let index = 0; index < searches.length; index++) {
-                    searches[index] = tag.sortFiles_namespace(searches[index], $("#custom_namespace").val());
-                    if (order) { searches[index].reverse(); }
+                $("#progress_bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
+
+                // last one done, process the metadatas for each search
+                let result = searches;
+                if (doNamespaceSort) {
+                    for (let index = 0; index < result.length; index++) {
+                        result[index] = tag.sortFiles_namespace(result[index], $("#custom_namespace").val());
+                    }
+                    if (order) { result[index].reverse(); }
                 }
+
+                let numberOfFiles = 0;
+                for (let index = 0; index < result.length; index++) {
+                    numberOfFiles += result[index].length;
+                    if (result[index].length === 0) { result[index] = [{ "mime": "no_file" }] }
+                }
+
+                console.info(`${numberOfFiles} files found across ${result.length} searches!`)
+                console.debug({ "fileMetadatas": result });
+
+                g.set_clientFiles(result);
+                for (let index = -(num_files_preload); index <= num_files_preload; index++) {
+                    const metadata = file.navFile(index, true);
+                    metadata["elem"] = loadFile(metadata)
+                }
+
+                tag.loadFiles();
+            } catch (e) {
+                //make loading bar red
+                console.error(e);
+                g.loading_error();
             }
-
-            console.debug(`${numberOfFiles} files found across ${searches.length} searches!`)
-            console.debug({ "fileMetadatas": searches });
-
-            // if (numberOfFiles === 0) {
-            //     $(".dot-elastic").hide();
-            //     $("#filePlaceholder0").append(file.createElem("p", "No files found!")).addClass("visible").removeClass("hidden");
-            //     return;
-            // }
-
-            g.set_clientFiles(searches);
-            for (let index = -(num_files_preload); index <= num_files_preload; index++) {
-                const metadata = file.navFile(index, true);
-                metadata["elem"] = loadFile(metadata)
-            }
-
-            tag.loadFiles();
             return;
         }
     }
@@ -127,10 +142,13 @@ export function loadFile(fileMetadata) {
 }
 
 export function update_currentPos_display() {
-    $("#currentPos_display_string").attr("title", $("#command").val().split("\n").filter(tag => tag.trim().length > 0)[file.currentPos.y]);
     $("#file_no").text(file.currentPos.x + 1);
     $("#file_length").text(g.clientFiles[file.currentPos.y].length);
-    $("#search_no").text(file.currentPos.y + 1);
+    $("#search_no").text(g.client_named_Searches[file.currentPos.y]);
+}
+
+export function update_file_numbers() {
+    $("#jump_to_file_number").prop("max", g.clientFiles[file.currentPos.y].length)
 }
 
 export function loadFileTags(metadata) {
@@ -175,45 +193,6 @@ export function loadFileTags(metadata) {
         if (current != undefined) { $("#taglist").val(current.join('\n')); }
     }
 
-    /* 
-        var pendingTags, petitionedtags, currentTags;
-    
-        if ($("#displayTagToggle :selected").text() == "Display tags") {
-            try {
-                pendingTags = metadata["service_names_to_statuses_to_display_tags"][$("#tagRepositoryList :selected").text()][1];
-                if (typeof pendingTags == "undefined") { pendingTags = []; }
-            } catch { pendingTags = []; }
-            try {
-                currentTags = metadata["service_names_to_statuses_to_display_tags"][$("#tagRepositoryList :selected").text()][0];
-                if (typeof currentTags == "undefined") { currentTags = []; }
-            } catch { currentTags = []; }
-            try {
-                petitionedtags = metadata["service_names_to_statuses_to_display_tags"][$("#tagRepositoryList :selected").text()][3];
-                if (typeof petitionedtags == "undefined") { petitionedtags = []; }
-            } catch { petitionedtags = []; }
-    
-            $("#taglist").val(pendingTags.concat(petitionedtags, currentTags).join('\n'));
-        }
-    
-        if ($("#displayTagToggle :selected").text() == "Actual Tags") {
-            try {
-                pendingTags = metadata["service_names_to_statuses_to_tags"][$("#tagRepositoryList :selected").text()][1];
-                if (typeof pendingTags == "undefined") { pendingTags = []; }
-            } catch { pendingTags = []; }
-            try {
-                currentTags = metadata["service_names_to_statuses_to_tags"][$("#tagRepositoryList :selected").text()][0];
-                if (typeof currentTags == "undefined") { currentTags = []; }
-            } catch { currentTags = []; }
-            try {
-                petitionedtags = metadata["service_names_to_statuses_to_tags"][$("#tagRepositoryList :selected").text()][3];
-                if (typeof petitionedtags == "undefined") { petitionedtags = []; }
-            } catch { petitionedtags = []; }
-    
-    
-            $("#taglist").val(pendingTags.concat(petitionedtags, currentTags).join('\n'));
-        }
-    
-        return; */
 }
 
 export function loadFileNotes(metadata) {

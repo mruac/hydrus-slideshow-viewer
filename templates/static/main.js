@@ -12,8 +12,9 @@ import * as ui from "./ui_functions.js";
 
 export let clientKey = "",
     clientURL = "http://127.0.0.1:45869",
-    clientFiles = undefined,
-    menuTimeout,
+    clientFiles = [],
+    client_named_Searches = [],
+    menuTimeout, cursor_timeout,
     menuTimeout_delay = 2000,
     isResizingLSidebar = false,
     isResizingRSidebar = false,
@@ -90,9 +91,10 @@ $.ajaxSetup({
     success: function (res) { console.debug(res) }
 });
 
-$("#command").val(localStorage["command"]);
-$("#clientKey").val(localStorage["clientKey"]);
-$("#clientURL").val(localStorage["clientURL"]);
+if (localStorage["command"] != undefined) { $("#command").val(localStorage["command"]); }
+if (localStorage["clientKey"] != undefined) { $("#clientKey").val(localStorage["clientKey"]); }
+if (localStorage["clientURL"] != undefined) { $("#clientURL").val(localStorage["clientURL"]); }
+if (localStorage["custom_namespace"] != undefined) { $("#custom_namespace").val(localStorage["custom_namespace"]); }
 
 if (localStorage["hideSidebarDelay"] != undefined) {
     $("#sidebarDelay").val(localStorage["hideSidebarDelay"]);
@@ -109,6 +111,10 @@ $(window).bind('beforeunload', function () {
 $("#sidebarDelay").on("keyup", function (event) {
     localStorage.setItem("hideSidebarDelay", $(event.target).val());
     menuTimeout_delay = $(event.target).val();
+});
+
+$("#custom_namespace").on("keyup", function (event) {
+    localStorage.setItem("custom_namespace", $(event.target).val());
 });
 
 $("#zoomToggle").on("change", (e) => {
@@ -219,6 +225,13 @@ $(document).on("hidden.bs.collapse", (e) => {
 
 $(document).on("pointermove", function (e) {
     if (!(isResizingLSidebar || isResizingRSidebar)) { //if not resizing sidebar
+        $("#fileCanvas").removeClass("nocursor");
+        clearTimeout(cursor_timeout);
+        cursor_timeout = setTimeout(() => {
+            if (!($("#leftSidebar, #rightSidebar").hasClass("show"))) {
+                $("#fileCanvas").addClass("nocursor")
+            }
+        }, menuTimeout_delay);
         return;
     } else {
         if (isResizingLSidebar) {
@@ -249,37 +262,55 @@ $(".menu-submenu").on("click", function (e) {
     }
 });
 
+export function loading_error() {
+    $(".progress").show().removeClass("border-secondary").addClass("border-danger");
+    $("#progress_bar").removeClass("bg-secondary").addClass("bg-danger")
+
+    setTimeout(() => {
+        $(".progress").hide();
+    }, 5000);
+    return;
+}
+
 $("#submitButton").on("click", function () {
-    $(".dot-flashing").show();
+    // $(".dot-flashing").show();
+    $(".progress").show().removeClass("border-danger").addClass("border-secondary");
+    $("#progress_bar").removeClass("bg-danger").addClass("bg-secondary")
+    $("#progress_bar").css("width", `0%`);
+
+
     $("#filePlaceholder *").remove();
     $("#filePlaceholder *").removeClass("visible").addClass("hidden");
     file.currentPos.x = 0;
     file.currentPos.y = 0;
-    clientFiles = undefined;
+    clientFiles = [];
+    client_named_Searches = [];
     const order = sort_val_to_sort_int[$("#sort_order").val()]
-    //get list of searches, split by newline, and remove any blank searches
-    let searches = $("#command").val().split("\n").filter(search => search.trim().length > 0);
-    if (searches.length === 0) {
+
+    let map = {};
+    try {
+        map = new Map(Object.entries(JSON.parse($("#command").val())));
+    } catch {
         error_textInput($("#command"));
         return;
     }
+    let searches = [];
+    $("#jump_to_search_name option").remove();
+    $("#jump_to_search_number").prop("max", map.size);
 
-    //split it further for the tags, by the comma - excluding escaped commas and square brackets (for OR searches)
-    for (let i = 0; i < searches.length; i++) {
-        // searches[i] = searches[i].split(/(?<!\\),/).filter(tag => tag.trim().length > 0);
-        // for (let ii = 0; ii < searches[i].length; ii++) {
-        //     searches[i][ii] = searches[i][ii].trim();
-        // }
-        try {
-            searches[i] = JSON.parse(searches[i]);
-        } catch {
-            error_textInput($("#command"));
-            return;
-        }
+
+    for (const search_name of map.keys()) {
+        searches.push(map.get(search_name));
+
+        let index = client_named_Searches.push(search_name) - 1;
+        $("#jump_to_search_name").append(
+            $('<option/>', { 'value': index }).text(search_name)
+        );
+
     }
+    ui.getFileMetaData(searches, order[0], order[1]);
 
 
-    ui.getFileMetaData(searches, order[0], order[1])
     console.debug(JSON.stringify(searches));
 });
 
@@ -356,6 +387,7 @@ $(document).on("keyup", (event) => {
             $.ajaxSetup({
                 headers: { "Hydrus-Client-API-Access-Key": $(event.target).val() }
             });
+            clientKey = $(event.target).val();
             localStorage.setItem("clientKey", $(event.target).val());
             testClient();
         }
@@ -384,6 +416,9 @@ $(document).on("keyup", (event) => {
     else if (event.key === "ArrowRight") { //right
         event.preventDefault();
         file.navFile(1);
+    } else if (event.key === "R" || event.key === "r") {
+        event.preventDefault();
+        file.navRandomFile();
     }
 
 });
@@ -397,6 +432,14 @@ $("#file_previous").on("click", () => {
 $("#file_random").on("click", () => {
     file.navRandomFile();
 });
+
+$("#jump_to_search_number").on("input", (e) => {
+    $($("#jump_to_search_name").children("option")[parseInt($(e.target).val()) - 1]).prop("selected", true);
+});
+$("#jump_to_search_name").on("change", (e) => {
+    $("#jump_to_search_number").val(parseInt($(e.target).val()) + 1);
+});
+
 $("#submit_jump").on("click", () => {
     const x = $("#jump_to_file_number");
     const y = $("#jump_to_search_number");
@@ -445,14 +488,15 @@ export function error_textInput(input_elem, error_msg) {
     const elem = $(input_elem);
     elem.css("background-color", "red");
     setTimeout(() => {
-        elem.css("background-color", "")
-    }, 1000);
+        elem.css("background-color", "");
+        $(".progress").hide();
+    }, 5000);
 
     if (error_msg) {
         console.error(error_msg);
     }
 
-    $(".dot-flashing").hide();
+    // $(".dot-flashing").hide();
 
     return;
 }

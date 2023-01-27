@@ -21,12 +21,13 @@ export function createElem(type, content) {
             return $(`<${type}/>`, {
                 'controls': '',
                 'loop': '',
+                'autoplay': '',
+                'muted': '',
                 'src': url
             });
     }
 }
 
-//FIXME: when navFile is triggered fast enough in succession, files can be shown at the same time over on top each other!
 export function navFile(increment, requireReturn = false) {
     let x = currentPos.x, y = currentPos.y;
     // console.log(`loading [${y}][${x}]`)
@@ -70,6 +71,7 @@ export function navFile(increment, requireReturn = false) {
         ui.loadFileNotes(file.navFile(0, true));
         ui.loadFileMetadata(file.navFile(0, true));
         ui.update_currentPos_display();
+        ui.update_file_numbers();
 
         console.debug(`loaded [${y}][${x}]`)
 
@@ -132,6 +134,7 @@ export function navFile(increment, requireReturn = false) {
 
 export function navRandomFile() {
     // try {
+    //FIXME: Implement a psuedo-random function where the Math.random is pre-determined, and the files are pre-fetched.
     currentPos.y = Math.floor(Math.random() * g.clientFiles.length);
     currentPos.x = Math.floor(Math.random() * g.clientFiles[currentPos.y].length);
 
@@ -141,7 +144,7 @@ export function navRandomFile() {
             metadata["elem"] = ui.loadFile(metadata)
         }
     }
-    console.log(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
+    console.debug(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
 
     tag.loadFiles();
 
@@ -159,7 +162,7 @@ export function jumpToFile(search_number = 0, file_number = 0) {
             metadata["elem"] = ui.loadFile(metadata)
         }
     }
-    console.log(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
+    console.debug(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
 
     tag.loadFiles();
 
