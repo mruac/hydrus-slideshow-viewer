@@ -18,13 +18,13 @@ export function createElem(type, content) {
                 'src': url,
             });
         case "video": case "audio":
-            return $(`<${type}/>`, {
+            let elem = $(`<${type}/>`, {
                 'controls': '',
                 'loop': '',
-                'autoplay': '',
-                'muted': '',
                 'src': url
             });
+            elem[0].volume = 0.5;
+            return elem;
     }
 }
 
@@ -98,8 +98,10 @@ export function navFile(increment, requireReturn = false) {
             //hide filePlaceholder[i], show next file in the next elem, load the file after in the elem after.
             if (increment === 1) {
                 $(filePlaceholder[i]).removeClass("visible").addClass("hidden");
+                $(filePlaceholder[i]).children("audio, video").trigger("pause");
                 if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
                 $(filePlaceholder[i]).removeClass("hidden").addClass("visible");
+                $(filePlaceholder[i]).children("audio, video").trigger("play");
                 if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
                 $(filePlaceholder[i].children[0]).remove();
                 $(filePlaceholder[i]).append(navFile(1, true)["elem"]);
@@ -119,8 +121,10 @@ export function navFile(increment, requireReturn = false) {
 
             if (increment === -1) {
                 $(filePlaceholder[i]).removeClass("visible").addClass("hidden");
+                $(filePlaceholder[i]).children("audio, video").trigger("pause");
                 if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
                 $(filePlaceholder[i]).removeClass("hidden").addClass("visible");
+                $(filePlaceholder[i]).children("audio, video").trigger("play");
                 if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
                 $(filePlaceholder[i].children[0]).remove();
                 $(filePlaceholder[i]).append(navFile(-1, true)["elem"]);

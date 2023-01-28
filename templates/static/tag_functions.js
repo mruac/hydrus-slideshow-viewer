@@ -72,16 +72,22 @@ export function loadFiles() {
 
     if (numberOfFiles < 3) {
         for (let index = 0; index < numberOfFiles; index++) {
-            const elem = $("<div/>", { "id": `filePlaceholder${index}`, "class": "swiper-slide" });
+            const elem = $("<div/>", { "id": `filePlaceholder${index}`});
             elem.append(file.navFile(index, true)["elem"]);
-            if (index === 0) { elem.addClass("visible"); } else { elem.addClass("hidden"); }
+            if (index === 0) { 
+                elem.addClass("visible");
+                elem.children("audio, video").trigger("play");
+         } else { elem.addClass("hidden"); }
             file_placeholder.append(elem);
         }
     } else {
         for (let index = 0; index < 3; index++) {
-            const elem = $("<div/>", { "id": `filePlaceholder${index}`, "class": "swiper-slide" });
+            const elem = $("<div/>", { "id": `filePlaceholder${index}`});
             elem.append(file.navFile(index - 1, true)["elem"]);
-            if (index - 1 === 0) { elem.addClass("visible"); } else { elem.addClass("hidden"); }
+            if (index - 1 === 0) { 
+                elem.addClass("visible");
+                elem.children("audio, video").trigger("play");
+             } else { elem.addClass("hidden"); }
             file_placeholder.append(elem);
         }
     }

@@ -1,11 +1,3 @@
-/*
-test2
-character:patches (toastycommander)
-test
-
-title:c95新刊
- */
-
 import * as file from "./file_functions.js";
 import * as tag from "./tag_functions.js";
 import * as ui from "./ui_functions.js";
@@ -287,31 +279,35 @@ $("#submitButton").on("click", function () {
     client_named_Searches = [];
     const order = sort_val_to_sort_int[$("#sort_order").val()]
 
-    let map = {};
     try {
-        map = new Map(Object.entries(JSON.parse($("#command").val())));
+
+        const input = JSON.parse($("#command").val());
+        $("#command").val(JSON.stringify(input, null, 4));
+
+        const map = new Map(Object.entries(input));
+
+        let searches = [];
+        $("#jump_to_search_name option").remove();
+        $("#jump_to_search_number").prop("max", map.size);
+
+
+        for (const search_name of map.keys()) {
+            searches.push(map.get(search_name));
+
+            let index = client_named_Searches.push(search_name) - 1;
+            $("#jump_to_search_name").append(
+                $('<option/>', { 'value': index }).text(search_name)
+            );
+        }
+
+    ui.getFileMetaData(searches, order[0], order[1]);
+    console.debug(JSON.stringify(searches));
+
     } catch {
         error_textInput($("#command"));
         return;
     }
-    let searches = [];
-    $("#jump_to_search_name option").remove();
-    $("#jump_to_search_number").prop("max", map.size);
 
-
-    for (const search_name of map.keys()) {
-        searches.push(map.get(search_name));
-
-        let index = client_named_Searches.push(search_name) - 1;
-        $("#jump_to_search_name").append(
-            $('<option/>', { 'value': index }).text(search_name)
-        );
-
-    }
-    ui.getFileMetaData(searches, order[0], order[1]);
-
-
-    console.debug(JSON.stringify(searches));
 });
 
 testClient();
