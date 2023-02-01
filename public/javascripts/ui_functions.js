@@ -5,6 +5,7 @@ import * as g from "./main.js";
 
 export const num_files_preload = 20;
 let job_id = 0;
+let SEARCH_THRESHOLD = 5000;
 
 //get fileIDs from a tag search
 export function getFileMetaData(searches, order_type = 2, order = false) {
@@ -27,6 +28,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 "file_sort_type": order_type,
             };
             if (order != undefined) { data["file_sort_asc"] = order; }
+            console.info(`getting "${g.client_named_Searches[i]}"`)
             $.ajax({
                 crossDomain: true,
                 method: "GET",
@@ -35,6 +37,14 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 dataType: 'json'
             }).done(function (response) {
                 if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
+                        //warn if search is greater than SEARCH_THRESHOLD, as the search may not be made correctly.
+        if (response.file_ids.length > SEARCH_THRESHOLD){
+            if( !(window.confirm(`Search "${g.client_named_Searches[i]}" has found more than ${SEARCH_THRESHOLD} files. This search may have produced more files than expected. \nContinue?`)) ){
+                job_id++;
+                g.loading_error();
+                return;
+            }
+        }
                 $.ajax({
                     crossDomain: true,
                     method: "GET",
