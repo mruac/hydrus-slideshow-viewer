@@ -256,20 +256,21 @@ $(".menu-submenu").on("click", function (e) {
 
 export function loading_error() {
     $(".progress").show().removeClass("border-secondary").addClass("border-danger");
-    $("#progress_bar").removeClass("bg-secondary").addClass("bg-danger")
+    $(".progress-bar").removeClass("bg-secondary").addClass("bg-danger")
 
     setTimeout(() => {
-        $(".progress").hide();
-    }, 5000);
+        $("#progress_bar").hide();
+        $("#progress_bar_status").text("");
+    }, 10000);
     return;
 }
 
 $("#submitButton").on("click", function () {
-    // $(".dot-flashing").show();
-    $(".progress").show().removeClass("border-danger").addClass("border-secondary");
-    $("#progress_bar").removeClass("bg-danger").addClass("bg-secondary")
-    $("#progress_bar").css("width", `0%`);
-
+    $("#progress_bar").show();
+    $("#progress_bar_status").text("");
+    $(".progress").removeClass("border-danger").addClass("border-secondary");
+    $(".progress-bar").removeClass("bg-danger").addClass("bg-secondary")
+    $(".progress-bar").css("width", `0%`);
 
     $("#filePlaceholder *").remove();
     $("#filePlaceholder *").removeClass("visible").addClass("hidden");
@@ -485,14 +486,13 @@ export function error_textInput(input_elem, error_msg) {
     elem.css("background-color", "red");
     setTimeout(() => {
         elem.css("background-color", "");
-        $(".progress").hide();
-    }, 5000);
+        $("#progress_bar").hide();
+    }, 10000);
 
     if (error_msg) {
         console.error(error_msg);
+        $("#progress_bar_status").text(error_msg);
     }
-
-    // $(".dot-flashing").hide();
 
     return;
 }

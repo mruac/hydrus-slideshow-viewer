@@ -185,7 +185,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="accordion-item">
                 <h2 class="accordion-header" id="settings_label">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -244,6 +244,7 @@
                 <div id="file_info_panel" class="accordion-collapse collapse" aria-labelledby="file_info_label"
                     style="">
                     <div class="accordion-body">
+                        <!-- FIXME: make this section a horizontal scrollable div to prevent the ENTIRE sidebar becoming scrollable div due to long hash / urls. -->
                         <div>
                             <label for="file_info_hash">Hash:</label>
                             <p id="file_info_hash" class="mono"></p>
@@ -266,7 +267,9 @@
                 <div id="notes_panel" class="accordion-collapse collapse show" aria-labelledby="notes_label" style="">
                     <div class="accordion-body">
                         <select id="file_info_notes" class="input-field"></select>
-                        <p id="file_info_notefield"></p>
+                        <p id="file_info_notefield">
+                            <!-- FIXME: make this selection selectable -->
+                        </p>
                     </div>
                 </div>
             </div>
@@ -310,12 +313,12 @@
     <div id="fileCanvas">
         <div id="filePlaceholder" class="swiper-wrapper">
         </div>
-        <div class="dot-flashing position-absolute top-50 start-50 translate-middle" style="display: none"></div>
-        <div class="rounded-pill border border-1 border-secondary bg-transparent progress position-absolute top-50 start-50 translate-middle w-25"
-            style="display: none;" role="progressbar" aria-label="Loading files" aria-valuenow="75" aria-valuemin="0"
-            aria-valuemax="100">
-            <div id="progress_bar" class="bg-secondary progress-bar progress-bar-striped progress-bar-animated"
-                style="width: 75%"></div>
+        <div id="progress_bar" class="position-absolute top-50 start-50 translate-middle w-100" style="display:none">
+            <div class="mx-auto rounded-pill border border-1 border-secondary bg-transparent progress w-50"
+                role="progressbar" aria-label="Loading files" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                <div class="bg-secondary progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div>
+            </div>
+            <p id="progress_bar_status" class="text-center text-break"></p>
         </div>
     </div>
 

@@ -28,7 +28,10 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 "file_sort_type": order_type,
             };
             if (order != undefined) { data["file_sort_asc"] = order; }
-            console.info(`getting "${g.client_named_Searches[i]}"`)
+            const status = `Getting search: ${g.client_named_Searches[i]}`;
+            console.info(status)
+            $("#progress_bar_status").text(status);
+
             $.ajax({
                 crossDomain: true,
                 method: "GET",
@@ -37,14 +40,15 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 dataType: 'json'
             }).done(function (response) {
                 if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
-                        //warn if search is greater than SEARCH_THRESHOLD, as the search may not be made correctly.
-        if (response.file_ids.length > SEARCH_THRESHOLD){
-            if( !(window.confirm(`Search "${g.client_named_Searches[i]}" has found more than ${SEARCH_THRESHOLD} files. This search may have produced more files than expected. \nContinue?`)) ){
-                job_id++;
-                g.loading_error();
-                return;
-            }
-        }
+                //warn if search is greater than SEARCH_THRESHOLD, as the search may not be made correctly.
+                if (response.file_ids.length > SEARCH_THRESHOLD) {
+                    if (!(window.confirm(`Search "${g.client_named_Searches[i]}" has found more than ${SEARCH_THRESHOLD} files. This search may have produced more files than expected. \nContinue?`))) {
+                        job_id++;
+                        g.loading_error();
+                        $("#progress_bar_status").text("Search cancelled.");
+                        return;
+                    }
+                }
                 $.ajax({
                     crossDomain: true,
                     method: "GET",
@@ -60,22 +64,22 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                     searches[i] = response.metadata;
 
                     i++;
-                    $("#progress_bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
+                    $(".progress-bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
 
                     //recurse with the next search
                     next();
-                }).fail(() => {
+                }).fail((err) => {
                     g.loading_error();
-                    g.error_textInput($("#command"));
+                    g.error_textInput($("#command"), err.responseText);
                 });
-            }).fail(() => {
+            }).fail((err) => {
                 g.loading_error();
-                g.error_textInput($("#command"));
+                g.error_textInput($("#command"), err.responseText);
             });
         } else {
             try {
 
-                $("#progress_bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
+                $(".progress-bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
 
                 // last one done, process the metadatas for each search
                 let result = searches;

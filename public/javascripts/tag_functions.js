@@ -56,7 +56,7 @@ export function loadFiles() {
 
     $("#filePlaceholder div *").remove();
 
-    $(".progress").hide();
+    $("#progress_bar").hide();
 
     ui.loadFileTags(file.navFile(0, true));
     ui.loadFileNotes(file.navFile(0, true));
