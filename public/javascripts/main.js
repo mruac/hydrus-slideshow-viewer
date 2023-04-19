@@ -12,7 +12,10 @@ export let clientKey = "",
     isResizingRSidebar = false,
     nav_increment = 1,
     panzoom_persist = false,
+    floating_notes_persist = false,
     pointer_start = null;
+
+let is_fullscreenchange_event = true;
 
 const offcanvasElementList = document.querySelectorAll('.offcanvas');
 const offcanvasList = [...offcanvasElementList].map(offcanvasEl => new bootstrap.Offcanvas(offcanvasEl));
@@ -87,6 +90,13 @@ if (localStorage["command"] != undefined) { $("#command").val(localStorage["comm
 if (localStorage["clientKey"] != undefined) { $("#clientKey").val(localStorage["clientKey"]); }
 if (localStorage["clientURL"] != undefined) { $("#clientURL").val(localStorage["clientURL"]); }
 if (localStorage["custom_namespace"] != undefined) { $("#custom_namespace").val(localStorage["custom_namespace"]); }
+if (localStorage["sort_order"] != undefined) { $("#sort_order").val(localStorage["sort_order"]); }
+if (localStorage["jump_files_by"] != undefined) { $("#jump_files_by").val(localStorage["jump_files_by"]); nav_increment = parseInt(localStorage["jump_files_by"]); }
+if (localStorage["floating_notes_checkbox"] != undefined) {
+    floating_notes_persist = localStorage["floating_notes_checkbox"] === "true" ? true : false;
+    $("#floating_notes_checkbox").prop("checked", floating_notes_persist);
+
+}
 
 if (localStorage["hideSidebarDelay"] != undefined) {
     $("#sidebarDelay").val(localStorage["hideSidebarDelay"]);
@@ -96,10 +106,6 @@ if (localStorage["hideSidebarDelay"] != undefined) {
     menuTimeout_delay = 2000;
 }
 
-$(window).bind('beforeunload', function () {
-    return "Do you want to exit this page?";
-});
-
 $("#sidebarDelay").on("keyup", function (event) {
     localStorage.setItem("hideSidebarDelay", $(event.target).val());
     menuTimeout_delay = $(event.target).val();
@@ -108,6 +114,41 @@ $("#sidebarDelay").on("keyup", function (event) {
 $("#custom_namespace").on("keyup", function (event) {
     localStorage.setItem("custom_namespace", $(event.target).val());
 });
+
+$(document).on('keydown', (e) => {
+    if (e.repeat) return;
+
+    if (e.key === "Shift") {
+        panzoom_elem.resume();
+        $("[for='zoomToggle']").addClass("active");
+
+    }
+});
+
+$(document).on('keyup', (e) => {
+
+    if (e.key === "Shift") {
+        panzoom_elem.pause();
+        $("[for='zoomToggle']").removeClass("active");
+
+        if (!panzoom_persist) {
+            resetZoom(panzoom_elem);
+            setTimeout(() => {
+                $("#filePlaceholder").removeAttr("style");
+            }, 50);
+        }
+    }
+});
+
+$(".popup select").on("change", function (e) {
+    const notes = file.navFile(0, true)?.notes;
+    if (Object.keys(notes).length === 0 || notes === undefined) { return; }
+    const keys = Object.keys(notes);
+    $(".popup-header span").text(keys[parseInt($(e.target).val())]);
+    $(".popup-content p").text(notes[keys[parseInt($(e.target).val())]]);
+
+});
+
 
 $("#zoomToggle").on("change", (e) => {
     if ($(e.target).is(':checked')) {
@@ -123,11 +164,61 @@ $("#zoomToggle").on("change", (e) => {
     }
 });
 
+// $("#window_fitToggle").on("change", (e) => {
+//     if ($(e.target).is(':checked')) {
+//         const currentFile;
+//         extendToWindow(currentFile);
+
+
+//         //call this each time navFile() is called to update the $("#filePlaceholder div *").css()
+//         //call this on viewport resize
+//         function extendToWindow(file) {
+//             $("#fileCanvas").css({
+//                 "position": "absolute",
+//                 "overflow": "auto",
+//                 "-ms-overflow-style": "none",
+//                 "scrollbar-width": "none"
+//             });
+//             //calculate if file is tall or wide
+//             if (file.width() > file.height()) {
+//                 //if wide
+//                 $("#filePlaceholder div *").css({
+//                     "width": "initial",
+//                     "height": "100%"
+//                 });
+//             } else {
+//                 //if tall
+//                 $("#filePlaceholder div *").css({
+//                     "width": "100%",
+//                     "height": "initial"
+//                 });
+//             }
+//         } else {
+//             $("#filePlaceholder div *").removeAttr('style');;
+//             $("#fileCanvas").removeAttr('style');;
+//         }
+
+//     }
+// });
+
 $("#panzoom_persist").on("change", (e) => {
     if ($(e.target).prop("checked")) {
         panzoom_persist = true;
     } else {
         panzoom_persist = false;
+    }
+});
+
+$("#floating_notes_checkbox").on("change", (e) => {
+    if ($(e.target).prop("checked")) {
+        floating_notes_persist = true;
+        localStorage.setItem("floating_notes_checkbox", $(e.target).prop("checked"));
+        ui.loadFileNotes(file.navFile(0, true));
+    } else {
+        floating_notes_persist = false;
+        localStorage.setItem("floating_notes_checkbox", $(e.target).prop("checked"));
+        ui.loadFileNotes(file.navFile(0, true));
+        $(".popup").addClass("d-none");
     }
 });
 
@@ -137,10 +228,6 @@ $("#tagRepositoryList , #displayTagToggle").each(function (i, v) {
     $(v).on("change", function (e) {
         ui.loadFileTags(file.navFile(0, true));
     });
-});
-
-$("#file_info_notes").on("change", function (e) {
-    ui.loadNote(file.navFile(0, true), $(e.target).val());
 });
 
 $(document).on("pointerdown", function (e) {
@@ -207,12 +294,20 @@ $(document).on("pointerup", function (e) {
     }
 });
 
+$('#fileCanvas').on('touchmove', function (e) {
+    e.preventDefault(); //allow swipenav by passing touch to pointer event
+});
+
 $(document).on("shown.bs.collapse", (e) => {
     adjustDraggableHeight();
 });
 
 $(document).on("hidden.bs.collapse", (e) => {
     adjustDraggableHeight();
+});
+
+$("#rightSidebar").on('shown.bs.offcanvas', () => {
+    bootstrap.ScrollSpy.getInstance($("#file_info_notefield")).refresh();
 });
 
 $(document).on("pointermove", function (e) {
@@ -233,14 +328,12 @@ $(document).on("pointermove", function (e) {
                 $('.leftSidebar').css("width", e.clientX + 'px');
             }
         }
-
         if (isResizingRSidebar) {
             if (e.clientX > (window.innerWidth * 0.2) &&
                 e.clientX < (window.innerWidth * 0.8)
             ) {
                 $('#rightSidebar').css("width", (window.innerWidth - e.clientX) + 'px');
             }
-
         }
     }
 });
@@ -271,6 +364,7 @@ $("#submitButton").on("click", function () {
     $(".progress").removeClass("border-danger").addClass("border-secondary");
     $(".progress-bar").removeClass("bg-danger").addClass("bg-secondary")
     $(".progress-bar").css("width", `0%`);
+    $(".popup").addClass("d-none");
 
     $("#filePlaceholder *").remove();
     $("#filePlaceholder *").removeClass("visible").addClass("hidden");
@@ -301,11 +395,17 @@ $("#submitButton").on("click", function () {
             );
         }
 
-    ui.getFileMetaData(searches, order[0], order[1]);
-    console.debug(JSON.stringify(searches));
+        ui.getFileMetaData(searches, order[0], order[1]);
+        console.debug(JSON.stringify(searches));
 
-    } catch {
-        error_textInput($("#command"));
+    } catch (e) {
+        console.log(e);
+        if (e instanceof SyntaxError) {
+            error_textInput($("#command"), "Search error: JSON Syntax error. Check your search input.");
+        } else {
+            error_textInput($("#command"), e);
+        }
+
         return;
     }
 
@@ -399,25 +499,66 @@ $(document).on("keyup", (event) => {
             localStorage.setItem("command", $(event.target).val());
         }
 
-        if ($("#jump_files_by").is(event.target)) {
-            nav_increment = parseInt($(e.target).val());
-        }
+        return;
+    }
+
+    if ($(".rightSidebar").find(event.target)[0]) {
+        event.preventDefault();
 
         return;
     }
 
     if (event.key === "ArrowLeft") { //left
         event.preventDefault();
-        file.navFile(-1);
+        if (event.shiftKey) {
+            file.navFile(-(nav_increment));
+        } else {
+            file.navFile(-1);
+        }
     }
     else if (event.key === "ArrowRight") { //right
         event.preventDefault();
-        file.navFile(1);
+        if (event.shiftKey) {
+            file.navFile(nav_increment);
+        } else {
+            file.navFile(1);
+        }
     } else if (event.key === "R" || event.key === "r") {
         event.preventDefault();
         file.navRandomFile();
+    } else if (event.key === "F" || event.key === "f") {
+        event.preventDefault();
+        toggleFullscreen();
     }
 
+});
+
+$("#fullscreen_mode").on("change", (e) => {
+    if (is_fullscreenchange_event) {
+        toggleFullscreen();
+    }
+});
+
+function toggleFullscreen() {
+    is_fullscreenchange_event = false;
+    if (document.fullscreenElement === null) {
+        document.body.requestFullscreen();
+        $("#fullscreen_mode").prop("checked", true);
+    } else {
+        document.exitFullscreen();
+        $("#fullscreen_mode").prop("checked", false);
+    }
+    is_fullscreenchange_event = true;
+    return;
+}
+
+$("#jump_files_by").on("change", (e) => {
+    nav_increment = parseInt($(e.target).val());
+    localStorage.setItem("jump_files_by", $(e.target).val());
+});
+
+$("#sort_order").on("change", (event) => {
+    localStorage.setItem("sort_order", $(event.target).val());
 });
 
 $("#file_next").on("click", () => {
@@ -435,6 +576,7 @@ $("#jump_to_search_number").on("input", (e) => {
 });
 $("#jump_to_search_name").on("change", (e) => {
     $("#jump_to_search_number").val(parseInt($(e.target).val()) + 1);
+    $("#file_length").text(`of ${clientFiles[parseInt($(e.target).val())].length} files`);
 });
 
 $("#submit_jump").on("click", () => {
@@ -462,6 +604,16 @@ $("#file_jump_previous").on("click", () => {
 $("#fileCanvas").on('click', function (event) {
     offcanvasList.forEach((v) => { v.hide(); });
 })
+
+new bootstrap.ScrollSpy($("#file_info_notefield"), {
+    target: $("#file_info_notes")
+});
+
+$("#file_info_notefield").on("activate.bs.scrollspy", function (e) {
+    const active_note = $("#file_info_notes li .active").text();
+    const note_button_label = $("#file_info_notes span");
+    note_button_label.text(active_note).prop("title", active_note);
+});
 
 //scroll nav
 //NOTE:uncomment me once panzoom has been implemented properly
@@ -509,9 +661,83 @@ function adjustDraggableHeight() {
 
 function toggleUI() {
     clearTimeout(menuTimeout);
-    $("[for=zoomToggle], #leftSidebarToggle, #rightSidebarToggle").fadeIn(400);
+    $("[for=zoomToggle], [for=window_fitToggle], #leftSidebarToggle, #rightSidebarToggle").fadeIn(400);
 
     menuTimeout = setTimeout(() => {
-        $("[for=zoomToggle], #leftSidebarToggle, #rightSidebarToggle").fadeOut(400);
+        $("[for=zoomToggle], [for=window_fitToggle], #leftSidebarToggle, #rightSidebarToggle").fadeOut(400);
     }, menuTimeout_delay);
 }
+
+function initDragElement() { //https://stackoverflow.com/a/72293914/5791312
+    //TODO: add resizer elems back (maybe on top and left side as well?)
+    //TODO: figure out how to keep floating div in viewport on window resize
+    var pos1 = 0,
+        pos2 = 0,
+        pos3 = 0,
+        pos4 = 0;
+    var popups = document.getElementsByClassName("popup");
+    var elmnt = null;
+
+    for (var i = 0; i < popups.length; i++) {
+        var popup = popups[i];
+        var header = getHeader(popup);
+
+        if (header) {
+            header.parentPopup = popup;
+            header.onpointerdown = dragMouseDown;
+        }
+    }
+
+    $('.popup-header').on('touchmove', function (e) {
+        e.preventDefault(); //allow swipenav by passing touch to pointer event
+    });
+
+    function dragMouseDown(e) {
+        elmnt = this.parentPopup;
+
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        $(document).on("pointerup", closeDragElement);
+        // call a function whenever the cursor moves:
+        $(document).on("pointermove", elementDrag);
+    }
+
+    function elementDrag(e) {
+
+        if (!elmnt) {
+            return;
+        }
+
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        // set the element's new position:
+        elmnt.style.top = elmnt.offsetTop - pos2 + "px";
+        elmnt.style.left = elmnt.offsetLeft - pos1 + "px";
+    }
+
+    function closeDragElement() {
+        /* stop moving when mouse button is released:*/
+        $(document).off("pointerup", closeDragElement);
+        $(document).off("pointermove", elementDrag);
+    }
+
+    function getHeader(element) {
+        var headerItems = element.getElementsByClassName("popup-header");
+        if (headerItems.length === 1) {
+            return headerItems[0];
+        }
+
+        return null;
+    }
+}
+$(document).ready(function () {
+    initDragElement();
+});
+
+
+

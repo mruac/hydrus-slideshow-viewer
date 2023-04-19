@@ -31,6 +31,7 @@
 </head>
 
 <body>
+
     <div class="offcanvas offcanvas-start leftSidebar" data-bs-scroll="true" data-bs-backdrop="false" id="leftSidebar">
         <div id="leftSidebarDraggable" class="sidebar-draggable"></div>
         <!--  -->
@@ -101,12 +102,12 @@
                     </div>
                 </div>
             </div>
-            <div class="accordion-item">
+            <!-- <div class="accordion-item">
                 <p class="accordion-button-label" id="currentPos_display_string">
                     Showing file [<span id="file_no">xxx</span>/<span id="file_length">XXX</span>] of search: "<span
                         id="search_no">XXX</span>"
                 </p>
-            </div>
+            </div> -->
 
             <div class="accordion-item">
                 <h2 class="accordion-header" id="navigation_label">
@@ -148,6 +149,7 @@
                         <div class="input-group mb-3">
                             <label class="input-group-text" for="jump_to_file_number">File no.</label>
                             <input class="form-control" type="number" value="1" min="1" id="jump_to_file_number">
+                            <span class="input-group-text" id="file_length">of xxx files</span>
                         </div>
                         <button type="button" class="btn btn-secondary" id="submit_jump">Jump!</button>
                         <button type="button" class="btn btn-secondary mx-3" id="file_random">Random</button>
@@ -177,8 +179,8 @@
                             </select>
                             <label for="displayTagToggle">Tags presented as:</label>
                         </div>
-                        <textarea id="taglist" rows="20" class="menu-textbox form-control mb-3""
-                placeholder='Tags...&#13;" Submit" to commit to current file.&#13;Remote tag services not supported.'
+                        <textarea id="taglist" rows="20" class="menu-textbox form-control mb-3"
+                            placeholder='Tags...&#13;" Submit" to commit to current file.&#13;Remote tag services not supported.'
                             readonly="readonly"></textarea>
                         <button type="button" class="btn btn-secondary" id="committags"
                             style="display: none">Submit</button>
@@ -243,8 +245,7 @@
                 </h2>
                 <div id="file_info_panel" class="accordion-collapse collapse" aria-labelledby="file_info_label"
                     style="">
-                    <div class="accordion-body">
-                        <!-- FIXME: make this section a horizontal scrollable div to prevent the ENTIRE sidebar becoming scrollable div due to long hash / urls. -->
+                    <div class="accordion-body overflow-x-auto">
                         <div>
                             <label for="file_info_hash">Hash:</label>
                             <p id="file_info_hash" class="mono"></p>
@@ -266,10 +267,15 @@
                 </h2>
                 <div id="notes_panel" class="accordion-collapse collapse show" aria-labelledby="notes_label" style="">
                     <div class="accordion-body">
-                        <select id="file_info_notes" class="input-field"></select>
-                        <p id="file_info_notefield">
-                            <!-- FIXME: make this selection selectable -->
-                        </p>
+                        <nav id="file_info_notes" class="btn-group dropdown w-100 pb-2 ">
+                            <a class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center justify-content-between active"
+                                href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                data-hydrus="DONE" style="overflow-x: hidden;">
+                                <span class="overflow-x-hidden">Note(s)</span>
+                            </a>
+                            <ul class="dropdown-menu"></ul>
+                        </nav>
+                        <div id="file_info_notefield"></div>
                     </div>
                 </div>
             </div>
@@ -278,12 +284,41 @@
                 <h2 class="accordion-header" id="zoom_label">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                         data-bs-target="#zoom_panel" aria-expanded="false" aria-controls="zoom_panel">
-                        Zoom</button>
+                        Other Settings</button>
                 </h2>
                 <div id="zoom_panel" class="accordion-collapse collapse" aria-labelledby="zoom_label" style="">
                     <div class="accordion-body">
-                        <label for="panzoom_persist" class="menu-item">Persist Zoom: </label><input type="checkbox"
-                            id="panzoom_persist">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" role="switch" id="fullscreen_mode">
+                            <label class="form-check-label" for="fullscreen_mode">Fullscreen mode</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" role="switch" id="panzoom_persist">
+                            <label class="form-check-label" for="panzoom_persist">Persist Zoom across files </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" role="switch" id="floating_notes_checkbox">
+                            <label class="form-check-label text-wrap" for="floating_notes_checkbox">Enable floating
+                                notes (will appear if
+                                there are notes available) </label>
+                        </div>
+                        <div class="form-floating mb-2">
+                            <textarea id="floating_notes_css" rows="20"
+                                class="font-monospace menu-textbox form-control mb-3 h-100" placeholder="
+                                CSS rules for floating notes window">
+.custom-body {
+    background: #0000006b;
+    box-shadow: 0 0 0.5em 0.5em #0000006b;
+    /* text-shadow: 0 0 0.5em black, 0 0 0.5em black, 0 0 0.5em black; */
+    /* font-weight: bold; */
+}
+
+.custom-header {}
+
+.custom-content {}
+                            </textarea>
+                            <label for="floating_notes_css">CSS rules for floating notes</label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -298,17 +333,36 @@
         data-bs-target="#rightSidebar" aria-controls="rightSidebar" id="rightSidebarToggle">
         Info
     </button>
-    <input class="btn-check" id="zoomToggle" type="checkbox" class="btn-check" autocomplete="off"
-        aria-controls="zoomToggle">
-    <label class="z-1 position-absolute bottom-0 end-0 m-2 btn btn-outline-primary" for="zoomToggle">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search"
-            viewBox="0 0 16 16" data-darkreader-inline-fill="" style="--darkreader-inline-fill:currentColor;">
-            <path
-                d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z">
-            </path>
-        </svg>
-    </label>
+    <div class="z-1 position-absolute bottom-0 end-0 m-2 btn-group" role="group" aria-label="zoom controls">
+        <input class="btn-check" id="zoomToggle" type="checkbox" autocomplete="off" aria-controls="zoomToggle">
+        <label class="btn btn-outline-primary" for="zoomToggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"></path>
+            </svg>
+        </label>
+    
+        <input class="btn-check" id="window_fitToggle" type="checkbox" autocomplete="off" aria-controls="window_fitToggle">
+        <label class="btn btn-outline-primary" for="window_fitToggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-arrows-angle-expand" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707z" />
+            </svg>
+        </label>
+    </div>
 
+    <div class="popup custom-body d-flex flex-column z-1 d-none" style="height: 300px; width: 300px;">
+        <div class="custom-header popup-header">
+            <div class="d-flex align-items-center">
+                <span class="w-100 text-center">
+                </span>
+                <select class="btn dropdown-toggle-split">
+                </select>
+            </div>
+        </div>
+        <div class="popup-content custom-content overflow-y-auto flex-grow-1">
+            <p></p>
+        </div>
+    </div>
 
     <div id="fileCanvas">
         <div id="filePlaceholder" class="swiper-wrapper">
@@ -316,7 +370,8 @@
         <div id="progress_bar" class="position-absolute top-50 start-50 translate-middle w-100" style="display:none">
             <div class="mx-auto rounded-pill border border-1 border-secondary bg-transparent progress w-50"
                 role="progressbar" aria-label="Loading files" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-                <div class="bg-secondary progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div>
+                <div class="bg-secondary progress-bar progress-bar-striped progress-bar-animated" style="width:0%">
+                </div>
             </div>
             <p id="progress_bar_status" class="text-center text-break"></p>
         </div>

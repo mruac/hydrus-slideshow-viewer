@@ -20,6 +20,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
 
     let i = 0;
     function next() {
+        //FIXME: discard search if there are no tags to search, or if there are no results.
         if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
 
         if (i < searches.length) {
@@ -156,9 +157,12 @@ export function loadFile(fileMetadata) {
 }
 
 export function update_currentPos_display() {
-    $("#file_no").text(file.currentPos.x + 1);
     $("#file_length").text(g.clientFiles[file.currentPos.y].length);
     $("#search_no").text(g.client_named_Searches[file.currentPos.y]);
+    $("#jump_to_search_name").prop("value", file.currentPos.y);
+    $("#jump_to_search_number").prop("value", file.currentPos.y + 1);
+    $("#jump_to_file_number").prop("value", file.currentPos.x + 1);
+    $("#file_length").text(`of ${g.clientFiles[file.currentPos.y].length} files`);
 }
 
 export function update_file_numbers() {
@@ -211,16 +215,64 @@ export function loadFileTags(metadata) {
 
 export function loadFileNotes(metadata) {
     const notes = metadata?.notes;
-    if (notes === undefined) { return; }
-    const note_options = $("#file_info_notes");
+    const note_button_options = $("#file_info_notes .dropdown-menu");
     const note_field = $("#file_info_notefield");
 
-    note_options.find("option").remove();
+     $(".popup").addClass("d-none"); 
+        $(".popup-header span").text("");
+        $(".popup-content p").text("");
+        note_button_options.find("li").remove();
+        note_field.find("div").remove();
+        $(".popup select").children("option").remove();
+
+    if (Object.keys(notes).length === 0 || notes === undefined) {
+   
+        $("#file_info_notes span").text("No notes!");
+        return;
+    } else { if (g.floating_notes_persist) { $(".popup").removeClass("d-none"); } }
+ 
+
     const keys = Object.keys(notes);
-    note_field.text(notes[keys[0]]);
+
     for (let index = 0; index < keys.length; index++) {
-        note_options.append($("<option/>").text(keys[index]));
+
+        note_button_options.append(
+            $("<li/>").append(
+                $("<a/>", { "class": "dropdown-item", "href": `#note${index}` })
+                    .on("click", () => {
+                        $("#file_info_notes .dropdown-menu .active").removeClass("active");
+                        $(`[href="#note${index}"]`).addClass("active");
+                        $("#file_info_notes span").text(keys[index]).prop("title", keys[index]);
+                    })
+                    .text(keys[index])
+            ));
+
+        $(".popup select").append(
+            $("<option/>", { "value": index }).text(keys[index])
+        );
+        const note_name = $("<h5/>", { "id": `note${index}` }).text(keys[index]);
+        note_field.append($("<div/>").append(
+            note_name
+        ).append(
+            $("<p/>").text(notes[keys[index]])
+        ).append($("<br/>"))
+        );
+
     }
+
+    //floating notes viewer
+    if (keys.length > 1) {
+        $(".popup select").show();
+    } else {
+        $(".popup select").hide();
+    }
+    $($(".popup select").children("option")[0]).prop("selected", true);
+    $(".popup-header span").text(keys[0]);
+    $(".popup-content p").text(notes[keys[0]]);
+
+    $("#file_info_notes span").text(keys[0]).prop("title", keys[0]);
+    $(`[href="#note0"]`).addClass("active");
+    bootstrap.ScrollSpy.getInstance($("#file_info_notefield")).refresh();
 }
 
 export function loadFileMetadata(metadata) {
@@ -237,6 +289,7 @@ export function loadFileMetadata(metadata) {
             $(`<span>${url}</span><br/>`)
         );
     });
+    elem_urls.append($("<br/>"));
 
 
 }

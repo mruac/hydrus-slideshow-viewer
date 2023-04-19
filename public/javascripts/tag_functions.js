@@ -4,6 +4,7 @@ import * as ui from "./ui_functions.js";
 import * as g from "./main.js";
 
 export function commitTags() {
+    //FIXME: reload image - currently the image disappears when navigating away and back
     const selected_service_key = $("#tagRepositoryList").val();
     const old_tags = file.navFile(0, true)?.tags?.[selected_service_key]?.storage_tags["0"];
     const new_tags = $("#taglist").val().split("\n").filter(search => search.trim().length > 0);
@@ -38,6 +39,7 @@ export function commitTags() {
             method: "GET"
 
         }).done(function (response) {
+            //FIXME: img disappears upon successful commit. maybe recreate the img elem?
             g.clientFiles[file.currentPos.y][file.currentPos.x] = response["metadata"][0];
             ui.loadFileTags(response["metadata"][0]);
             $("#committags").css("background-color", "lime");
@@ -63,31 +65,31 @@ export function loadFiles() {
     ui.loadFileMetadata(file.navFile(0, true));
     //FIXME: why does a search return undefined? is it a byproduct of a failed ajax request?
     //@ the val === undefined
-    const numberOfFiles = g.clientFiles.reduce((acc, val) => { 
+    const numberOfFiles = g.clientFiles.reduce((acc, val) => {
         // if (val === undefined) { return; } 
-        return acc + val.length; 
+        return acc + val.length;
     }, 0);
     const file_placeholder = $("#filePlaceholder");
     file_placeholder.find("div").remove();
 
     if (numberOfFiles < 3) {
         for (let index = 0; index < numberOfFiles; index++) {
-            const elem = $("<div/>", { "id": `filePlaceholder${index}`});
+            const elem = $("<div/>", { "id": `filePlaceholder${index}` });
             elem.append(file.navFile(index, true)["elem"]);
-            if (index === 0) { 
+            if (index === 0) {
                 elem.addClass("visible");
                 elem.children("audio, video").trigger("play");
-         } else { elem.addClass("hidden"); }
+            } else { elem.addClass("hidden"); }
             file_placeholder.append(elem);
         }
     } else {
         for (let index = 0; index < 3; index++) {
-            const elem = $("<div/>", { "id": `filePlaceholder${index}`});
+            const elem = $("<div/>", { "id": `filePlaceholder${index}` });
             elem.append(file.navFile(index - 1, true)["elem"]);
-            if (index - 1 === 0) { 
+            if (index - 1 === 0) {
                 elem.addClass("visible");
                 elem.children("audio, video").trigger("play");
-             } else { elem.addClass("hidden"); }
+            } else { elem.addClass("hidden"); }
             file_placeholder.append(elem);
         }
     }
@@ -108,10 +110,22 @@ export function sortFiles_namespace(metadatas, sortOption) {
     sortOption.forEach(namespace => {
         metadatas.sort((a, b) => {
             //uses the first matching tag that has the namespace
-            a = a.tags[all_known_tags].display_tags?.["0"].find((tag) => { return tag.startsWith(`${namespace}:`) });
-            b = b.tags[all_known_tags].display_tags?.["0"].find((tag) => { return tag.startsWith(`${namespace}:`) });
-            if (typeof (a) != "string") { a = ""; }
-            if (typeof (b) != "string") { b = ""; }
+            //FIXME: When including this search, TypeError: Cannot read properties of undefined (reading 'find') on a.tags[all_known_tags].display_tags?.["0"].find()
+            /*    
+            "intro": [
+            "-human focus",
+            "-is tagged*",
+            "system:limit is 5",
+            "-to *"
+            ]
+            */
+            try {
+                a = a.tags[all_known_tags].display_tags?.["0"].find((tag) => { return tag.startsWith(`${namespace}:`) });
+                b = b.tags[all_known_tags].display_tags?.["0"].find((tag) => { return tag.startsWith(`${namespace}:`) });
+
+                if (typeof (a) != "string") { a = ""; }
+                if (typeof (b) != "string") { b = ""; }
+            } catch { }
             return collator.compare(a, b); //to include non-ascii characters
         });
     });

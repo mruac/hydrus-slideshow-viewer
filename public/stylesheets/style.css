@@ -1,7 +1,65 @@
-@import url('./three-dots.css');
-
 .dot-elastic {
   margin: 0 auto;
+}
+
+.popup {
+  z-index: 9;
+  min-height: 150px;
+  min-width: 300px;
+}
+
+.popup select {
+  color: var(--bs-body);
+  width: 0;
+}
+
+.popup option {
+  color: var(--bs-dark-text);
+  text-align: start;
+}
+
+/*Drgable */
+
+.popup {
+  position: absolute;
+  resize: both;
+  overflow: hidden;
+}
+
+.custom-body {
+  background: #0000006b;
+  box-shadow: 0 0 0.5em 0.5em #0000006b;
+  /* text-shadow: 0 0 0.5em black, 0 0 0.5em black, 0 0 0.5em black; */
+  /* font-weight: bold; */
+}
+
+.popup-header {
+  text-align: center;
+  padding: 10px;
+  cursor: move;
+  z-index: 10;
+}
+
+.popup-content {
+  white-space: pre-wrap;
+  padding: 0.5rem;
+}
+
+.popup-content::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-header .dropdown-item {
+  font-family: var(--bs-body-font-family);
+  font-weight: var(--bs-body-font-weight);
+  line-height: var(--bs-body-line-height);
+  color: var(--bs-body-color);
+  text-align: var(--bs-body-text-align);
+  background-color: var(--bs-body-bg);
+  -webkit-text-stroke-width: initial;
+  -webkit-text-stroke-color: initial;
+  -webkit-text-fill-color: initial;
+  white-space: normal;
 }
 
 body {
@@ -22,6 +80,11 @@ button {
   /* border: none; */
 }
 
+.hidden_overflow {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 #filePlaceholder {
   width: 100%;
   height: 100%;
@@ -39,7 +102,7 @@ button {
 }
 
 #fileCanvas:focus-visible {
-outline:0;
+  outline: 0;
 }
 
 #filePlaceholder * {
@@ -70,7 +133,7 @@ outline:0;
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
 }
 
 .leftSidebar {
@@ -161,6 +224,7 @@ div#rightSidebar {}
   outline: 0;
   border: 1px solid #00000000;
   box-sizing: border-box;
+  white-space: normal;
 }
 
 .menu-item p {
@@ -322,7 +386,18 @@ table {
   overflow-y: auto;
   resize: vertical;
   height: 300px;
+  user-select: text;
 }
+
+.is-pinned {
+  color: red;
+}
+
+/* .note_header {
+  position: sticky;
+  top: -1px;
+  background-color: var(--bs-body-bg);
+} */
 
 #tagnavcustomselectable p {
   font-family: monospace;
@@ -343,7 +418,7 @@ table {
   /* align-content: flex-start; */
 }
 
-#leftSidebarMenu > div:nth-child(1) > p {
+#leftSidebarMenu>div:nth-child(1)>p {
   width: max-content;
   margin: 0;
   padding: 10px;
