@@ -4,7 +4,6 @@ import * as ui from "./ui_functions.js";
 import * as g from "./main.js";
 
 export function commitTags() {
-    //FIXME: reload image - currently the image disappears when navigating away and back
     const selected_service_key = $("#tagRepositoryList").val();
     const old_tags = file.navFile(0, true)?.tags?.[selected_service_key]?.storage_tags["0"];
     const new_tags = $("#taglist").val().split("\n").filter(search => search.trim().length > 0);
@@ -39,8 +38,10 @@ export function commitTags() {
             method: "GET"
 
         }).done(function (response) {
-            //FIXME: img disappears upon successful commit. maybe recreate the img elem?
-            g.clientFiles[file.currentPos.y][file.currentPos.x] = response["metadata"][0];
+            //TESTME: img disappears upon successful commit. maybe recreate the img elem?
+            let metadata = response["metadata"][0];
+            metadata["elem"] = ui.loadFile(metadata);
+            g.clientFiles[file.currentPos.y][file.currentPos.x] = metadata;
             ui.loadFileTags(response["metadata"][0]);
             $("#committags").css("background-color", "lime");
             setTimeout(() => {

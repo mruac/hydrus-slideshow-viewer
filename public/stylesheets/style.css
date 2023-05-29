@@ -26,12 +26,6 @@
   overflow: hidden;
 }
 
-.custom-body {
-  background: #0000006b;
-  box-shadow: 0 0 0.5em 0.5em #0000006b;
-  /* text-shadow: 0 0 0.5em black, 0 0 0.5em black, 0 0 0.5em black; */
-  /* font-weight: bold; */
-}
 
 .popup-header {
   text-align: center;
@@ -47,19 +41,6 @@
 
 .popup-content::-webkit-scrollbar {
   display: none;
-}
-
-.custom-header .dropdown-item {
-  font-family: var(--bs-body-font-family);
-  font-weight: var(--bs-body-font-weight);
-  line-height: var(--bs-body-line-height);
-  color: var(--bs-body-color);
-  text-align: var(--bs-body-text-align);
-  background-color: var(--bs-body-bg);
-  -webkit-text-stroke-width: initial;
-  -webkit-text-stroke-color: initial;
-  -webkit-text-fill-color: initial;
-  white-space: normal;
 }
 
 body {

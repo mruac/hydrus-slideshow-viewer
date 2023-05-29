@@ -13,7 +13,8 @@ export let clientKey = "",
     nav_increment = 1,
     panzoom_persist = false,
     floating_notes_persist = false,
-    pointer_start = null;
+    pointer_start = null,
+    fitToggle = false;
 
 let is_fullscreenchange_event = true;
 
@@ -76,6 +77,72 @@ const sort_val_to_sort_int = {
     "36": [20],
     "37": [100, false],
     "38": [100, true]
+};
+const floating_notes_styles = {
+    "text shadow outline_BH": `
+    .custom-body {
+        text-shadow: 0 0 0.5em black, 0 0 0.5em black, 0 0 0.5em black;
+        backdrop-filter: blur(2px);
+    }
+
+    .custom-header {
+        font-weight: bold; 
+   }`,
+
+    "text shadow outline": `
+    .custom-body {
+        text-shadow: 0 0 0.5em black, 0 0 0.5em black, 0 0 0.5em black;
+        backdrop-filter: blur(2px);
+    }`,
+
+    "dark transclucent_BH": `
+    .custom-body {
+        background: #0000006b;
+        box-shadow: 0 0 0.5em 0.5em #0000006b;
+        backdrop-filter: blur(2px);
+    }
+
+    .custom-header {
+         font-weight: bold; 
+    }`,
+
+    "dark transclucent": `
+    .custom-body {
+        background: #0000006b;
+        box-shadow: 0 0 0.5em 0.5em #0000006b;
+        backdrop-filter: blur(2px);
+    }`,
+
+    "what": `
+    .custom-body {
+        backdrop-filter: blur(2px);
+    }
+
+    .custom-header{
+        font-family: sans-serif;
+        font-weight: bold; 
+        letter-spacing: 0.15rem;
+        color: #fff;
+        text-shadow: -4px 4px #ef3550,
+                     -8px 8px #f48fb1,
+                     -12px 12px #7e57c2,
+                     -16px 16px #2196f3,
+                     -20px 20px #26c6da,
+                     -24px 24px #43a047,
+                     -28px 28px #eeff41,
+                     -32px 32px #f9a825,
+                     -36px 36px #ff5722;
+      
+    }
+
+    .custom-content {
+        -webkit-text-stroke-width: 1px;
+        -webkit-text-stroke-color: #ff0000;
+        -webkit-text-fill-color: #f2ff00;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+        text-shadow: 4px 4px 4px #00ffee;
+    }
+    `
 }
 
 clientKey = localStorage["clientKey"];
@@ -92,6 +159,7 @@ if (localStorage["clientURL"] != undefined) { $("#clientURL").val(localStorage["
 if (localStorage["custom_namespace"] != undefined) { $("#custom_namespace").val(localStorage["custom_namespace"]); }
 if (localStorage["sort_order"] != undefined) { $("#sort_order").val(localStorage["sort_order"]); }
 if (localStorage["jump_files_by"] != undefined) { $("#jump_files_by").val(localStorage["jump_files_by"]); nav_increment = parseInt(localStorage["jump_files_by"]); }
+if (localStorage["floating_notes_css"] != undefined) { $("#floating_notes_css").val(localStorage["floating_notes_css"]); $("#notesCSS").html(floating_notes_styles[localStorage["floating_notes_css"]]); }
 if (localStorage["floating_notes_checkbox"] != undefined) {
     floating_notes_persist = localStorage["floating_notes_checkbox"] === "true" ? true : false;
     $("#floating_notes_checkbox").prop("checked", floating_notes_persist);
@@ -115,6 +183,12 @@ $("#custom_namespace").on("keyup", function (event) {
     localStorage.setItem("custom_namespace", $(event.target).val());
 });
 
+$("#floating_notes_css").on("change", function (event) {
+
+    localStorage.setItem("floating_notes_css", $(event.target).val());
+    $("#notesCSS").html(floating_notes_styles[$(event.target).val()]);
+});
+
 $(document).on('keydown', (e) => {
     if (e.repeat) return;
 
@@ -132,10 +206,10 @@ $(document).on('keyup', (e) => {
         $("[for='zoomToggle']").removeClass("active");
 
         if (!panzoom_persist) {
-            resetZoom(panzoom_elem);
-            setTimeout(() => {
-                $("#filePlaceholder").removeAttr("style");
-            }, 50);
+            // resetZoom(panzoom_elem);
+            // setTimeout(() => {
+            //     $("#filePlaceholder").removeAttr("style");
+            // }, 50);
         }
     }
 });
@@ -164,42 +238,56 @@ $("#zoomToggle").on("change", (e) => {
     }
 });
 
-// $("#window_fitToggle").on("change", (e) => {
-//     if ($(e.target).is(':checked')) {
-//         const currentFile;
-//         extendToWindow(currentFile);
+$("#window_fitToggle").on("change", (e) => {
+    if ($(e.target).is(':checked')) {
+        fitToggle = true;
+        const currentFile = "";
+        extendToWindow(currentFile);
+        //FIXME: tell the scrollNav() to scroll when end of image has been reached.
+        //TODO: convert vertical scroll into horizontal scroll so the mouse scroll and scroll just fine.
+        //maybe rotate the container and image 90 degrees?
+
+        //call this each time navFile() is called to update the $("#filePlaceholder div *").css()
+        //call this on viewport resize
+
+    } else {
+        fitToggle = false;
+        resetFit();
+    }
+
+    function extendToWindow(file) {
+        //the overflow works fine when fit
+        //nav() fires before scroll down
+        //it allows scroll up THEN nav() fires.
+        $("#fileCanvas").css({
+            "position": "absolute",
+            "overflow": "auto",
+            "-ms-overflow-style": "none",
+            "scrollbar-width": "none"
+        });
+        //calculate if file is tall or wide
+        //file.videoWidth > file.videoHeight
+        if (file.naturalWidth > file.naturalHeight) {
+            //if wide
+            $("#filePlaceholder div *").css({
+                "width": "initial",
+                "height": "100%"
+            });
+        } else {
+            //if tall
+            $("#filePlaceholder div *").css({
+                "width": "100%",
+                "height": "initial"
+            });
+        }
+    }
+
+    function resetFit() {
+        $("#filePlaceholder div *").removeAttr('style');
+    }
 
 
-//         //call this each time navFile() is called to update the $("#filePlaceholder div *").css()
-//         //call this on viewport resize
-//         function extendToWindow(file) {
-//             $("#fileCanvas").css({
-//                 "position": "absolute",
-//                 "overflow": "auto",
-//                 "-ms-overflow-style": "none",
-//                 "scrollbar-width": "none"
-//             });
-//             //calculate if file is tall or wide
-//             if (file.width() > file.height()) {
-//                 //if wide
-//                 $("#filePlaceholder div *").css({
-//                     "width": "initial",
-//                     "height": "100%"
-//                 });
-//             } else {
-//                 //if tall
-//                 $("#filePlaceholder div *").css({
-//                     "width": "100%",
-//                     "height": "initial"
-//                 });
-//             }
-//         } else {
-//             $("#filePlaceholder div *").removeAttr('style');;
-//             $("#fileCanvas").removeAttr('style');;
-//         }
-
-//     }
-// });
+});
 
 $("#panzoom_persist").on("change", (e) => {
     if ($(e.target).prop("checked")) {
@@ -624,12 +712,14 @@ $("#fileCanvas").on('mousewheel', function (event) {
     // }
     // if ($(".leftSidebar").find(event.target)[0]) { return; }
     if (panzoom_elem.isPaused()) {
-        if (event.originalEvent.wheelDelta / 120 > 0) {//scroll up
-            file.navFile(-1);
-        }
-        else { //scroll down
-            file.navFile(1);
-        }
+        if (!fitToggle) {
+            if (event.originalEvent.wheelDelta / 120 > 0) {//scroll up
+                file.navFile(-1);
+            }
+            else { //scroll down
+                file.navFile(1);
+            }
+        } else { }
     }
 });
 

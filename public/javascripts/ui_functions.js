@@ -20,10 +20,17 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
 
     let i = 0;
     function next() {
-        //FIXME: discard search if there are no tags to search, or if there are no results.
         if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
 
         if (i < searches.length) {
+            //TESTME: discard search if there are no tags to search.
+            if (searches[i].length === 0) {
+                i++;
+                $(".progress-bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
+
+                //recurse with the next search
+                next();
+            }
             const data = {
                 "tags": JSON.stringify(searches[i]),
                 "file_sort_type": order_type,
@@ -49,6 +56,14 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                         $("#progress_bar_status").text("Search cancelled.");
                         return;
                     }
+                } else if (response.file_ids.length === 0) {
+                                //TESTME: discard search if there are no results.
+                    i++;
+                    $(".progress-bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
+
+                    //recurse with the next search
+                    next();
+
                 }
                 $.ajax({
                     crossDomain: true,
@@ -71,11 +86,11 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                     next();
                 }).fail((err) => {
                     g.loading_error();
-                    g.error_textInput($("#command"), err.responseText);
+                    g.error_textInput($("#command"), `Error on search "${g.client_named_Searches[i]}": ${err.responseText}`);
                 });
             }).fail((err) => {
                 g.loading_error();
-                g.error_textInput($("#command"), err.responseText);
+                g.error_textInput($("#command"), `Error on search "${g.client_named_Searches[i]}": ${err.responseText}`);
             });
         } else {
             try {
@@ -218,19 +233,19 @@ export function loadFileNotes(metadata) {
     const note_button_options = $("#file_info_notes .dropdown-menu");
     const note_field = $("#file_info_notefield");
 
-     $(".popup").addClass("d-none"); 
-        $(".popup-header span").text("");
-        $(".popup-content p").text("");
-        note_button_options.find("li").remove();
-        note_field.find("div").remove();
-        $(".popup select").children("option").remove();
+    $(".popup").addClass("d-none");
+    $(".popup-header span").text("");
+    $(".popup-content p").text("");
+    note_button_options.find("li").remove();
+    note_field.find("div").remove();
+    $(".popup select").children("option").remove();
 
     if (Object.keys(notes).length === 0 || notes === undefined) {
-   
+
         $("#file_info_notes span").text("No notes!");
         return;
     } else { if (g.floating_notes_persist) { $(".popup").removeClass("d-none"); } }
- 
+
 
     const keys = Object.keys(notes);
 

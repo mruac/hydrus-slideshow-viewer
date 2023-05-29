@@ -28,7 +28,9 @@
             cursor: none;
         }
     </style>
-</head>
+    <style id="notesCSS">
+
+    </style>
 
 <body>
 
@@ -96,9 +98,14 @@
                             </select>
                             <label for="sort_order">Sort order</label>
                         </div>
-                        <button type="button" class="btn btn-secondary" id="submitButton">
-                            Submit
-                        </button>
+                        <div class="d-flex justify-content-start">
+                            <button type="button" class="btn btn-secondary" id="submitButton">
+                                Submit
+                            </button>
+                            <a class="btn btn-link"
+                                href="https://hydrusnetwork.github.io/hydrus/developer_api.html#get_files_search_files"
+                                target="_blank" rel="noreferrer noopener" role="button">Search files reference</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -302,22 +309,15 @@
                                 notes (will appear if
                                 there are notes available) </label>
                         </div>
-                        <div class="form-floating mb-2">
-                            <textarea id="floating_notes_css" rows="20"
-                                class="font-monospace menu-textbox form-control mb-3 h-100" placeholder="
-                                CSS rules for floating notes window">
-.custom-body {
-    background: #0000006b;
-    box-shadow: 0 0 0.5em 0.5em #0000006b;
-    /* text-shadow: 0 0 0.5em black, 0 0 0.5em black, 0 0 0.5em black; */
-    /* font-weight: bold; */
-}
-
-.custom-header {}
-
-.custom-content {}
-                            </textarea>
-                            <label for="floating_notes_css">CSS rules for floating notes</label>
+                        <div class="form-floating">
+                            <select class="form-select" id="floating_notes_css">
+                                <option value="dark transclucent" selected>dark transclucent</option>
+                                <option value="dark transclucent_BH">dark transclucent (bold header)</option>
+                                <option value="text shadow outline">text shadow outline</option>
+                                <option value="text shadow outline_BH">text shadow outline (bold header)</option>
+                                <option value="what">what (use at own risk)</option>
+                            </select>
+                            <label for="floating_notes_css">Apply floating note style:</label>
                         </div>
                     </div>
                 </div>
@@ -336,16 +336,21 @@
     <div class="z-1 position-absolute bottom-0 end-0 m-2 btn-group" role="group" aria-label="zoom controls">
         <input class="btn-check" id="zoomToggle" type="checkbox" autocomplete="off" aria-controls="zoomToggle">
         <label class="btn btn-outline-primary" for="zoomToggle">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search"
+                viewBox="0 0 16 16">
+                <path
+                    d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z">
+                </path>
             </svg>
         </label>
-    
-        <input class="btn-check" id="window_fitToggle" type="checkbox" autocomplete="off" aria-controls="window_fitToggle">
+
+        <input class="btn-check" id="window_fitToggle" type="checkbox" autocomplete="off"
+            aria-controls="window_fitToggle">
         <label class="btn btn-outline-primary" for="window_fitToggle">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                 class="bi bi-arrows-angle-expand" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707z" />
+                <path fill-rule="evenodd"
+                    d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707z" />
             </svg>
         </label>
     </div>
