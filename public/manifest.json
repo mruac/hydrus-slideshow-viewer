@@ -1,0 +1,14 @@
+{
+    "name": "Hydrus Slideshow Viewer",
+    "description": "A slideshow viewer for your Hydrus client.",
+    "icons": [
+        {
+            "src": "icon.png",
+            "type": "image/png",
+            "sizes": "128x128"
+        }
+    ],
+    "display": "standalone",
+    "start_url": "./",
+    "scope": "."
+}

@@ -2,6 +2,16 @@ import * as file from "./file_functions.js";
 import * as tag from "./tag_functions.js";
 import * as ui from "./ui_functions.js";
 
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./service-worker.js")
+        .then(function (registration) {
+            console.log("Service Worker registered with scope:", 
+                         registration.scope);
+        }).catch(function (err) {
+        console.error("Service worker registration failed:", err);
+    });
+}
+
 export let clientKey = "",
     clientURL = "http://127.0.0.1:45869",
     clientFiles = [],
