@@ -38,7 +38,6 @@ export function commitTags() {
             method: "GET"
 
         }).done(function (response) {
-            //TESTME: img disappears upon successful commit. maybe recreate the img elem?
             let metadata = response["metadata"][0];
             metadata["elem"] = ui.loadFile(metadata);
             g.clientFiles[file.currentPos.y][file.currentPos.x] = metadata;
@@ -64,10 +63,7 @@ export function loadFiles() {
     ui.loadFileTags(file.navFile(0, true));
     ui.loadFileNotes(file.navFile(0, true));
     ui.loadFileMetadata(file.navFile(0, true));
-    //FIXME: why does a search return undefined? is it a byproduct of a failed ajax request?
-    //@ the val === undefined
     const numberOfFiles = g.clientFiles.reduce((acc, val) => {
-        // if (val === undefined) { return; } 
         return acc + val.length;
     }, 0);
     const file_placeholder = $("#filePlaceholder");

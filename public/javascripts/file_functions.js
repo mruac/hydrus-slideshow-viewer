@@ -42,9 +42,6 @@ export function navFile(increment, requireReturn = false) {
                 x = 0;
             } //sets X to next forward possible file, looping around if X is greater than the current search (Y)'s number of files
         } else {//-
-            //BUG:increment goes from -5 to -6, causes endless loop
-            //{"y": 0, "x": 0 } incr = -1
-            //[ [14], [1] ]
             while (!((x + tmpincrement) > -1 && (x + tmpincrement) < g.clientFiles[y].length)) { //NOT (while X is GREATHER THAN 0) - tests whether X is NOT less than Y
                 tmpincrement = tmpincrement + (x + 1);
 
@@ -137,8 +134,6 @@ export function navFile(increment, requireReturn = false) {
 }
 
 export function navRandomFile() {
-    // try {
-    //FIXME: Implement a psuedo-random function where the Math.random is pre-determined, and the files are pre-fetched.
     currentPos.y = Math.floor(Math.random() * g.clientFiles.length);
     currentPos.x = Math.floor(Math.random() * g.clientFiles[currentPos.y].length);
 
@@ -151,8 +146,6 @@ export function navRandomFile() {
     console.debug(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
 
     tag.loadFiles();
-
-    // } catch { }
 }
 
 export function jumpToFile(search_number = 0, file_number = 0) {

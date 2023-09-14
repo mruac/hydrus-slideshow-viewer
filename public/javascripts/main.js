@@ -2,16 +2,6 @@ import * as file from "./file_functions.js";
 import * as tag from "./tag_functions.js";
 import * as ui from "./ui_functions.js";
 
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./service-worker.js")
-        .then(function (registration) {
-            console.log("Service Worker registered with scope:", 
-                         registration.scope);
-        }).catch(function (err) {
-        console.error("Service worker registration failed:", err);
-    });
-}
-
 export let clientKey = "",
     clientURL = "http://127.0.0.1:45869",
     clientFiles = [],
@@ -836,6 +826,17 @@ function initDragElement() { //https://stackoverflow.com/a/72293914/5791312
     }
 }
 $(document).ready(function () {
+    if ("serviceWorker" in navigator) {
+        window.addEventListener('load', async () => {
+            navigator.serviceWorker.register("/service-worker.js").then((registration) => {
+                console.log("Service Worker registered with scope:",
+                    registration.scope);
+            }).catch((err) => {
+                console.error("Service worker registration failed:", err);
+            });
+        });
+    }else{console.error("does not support service worker!");}
+    
     initDragElement();
 });
 
