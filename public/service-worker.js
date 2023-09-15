@@ -13,14 +13,13 @@ const URLS_TO_CACHE = [
 
 self.addEventListener("fetch", (event) => {
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                console.info(`returned from cache ${event.request}`);
-                return cachedResponse;
-            }
-            console.info(`returned from live ${event.request}`);
-            return fetch(event.request);
-        }),
+        fetch(event.request).catch(()=>{
+            caches.match(event.request).then((cachedResponse) => {
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+            })
+        })
     );
 });
 
