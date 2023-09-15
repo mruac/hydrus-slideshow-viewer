@@ -62,9 +62,15 @@
                 </h2>
                 <div id="file_tag_panel" class="accordion-collapse collapse" aria-labelledby="file_tag_label">
                     <div class="accordion-body">
+                        <label for="command" class="form-label m-0">Enter JSON:</label>
                         <textarea id="command" class="menu-textbox font-monospace form-control mb-3" rows="5"
                             spellcheck="false"
-                            placeholder='JSON here...&#10;{ "named search": &#10;["tag1", ["green","red"] ]&#10;}'></textarea>
+                            placeholder='{ "named search": &#10;["tag1", ["green","red"] ]&#10;}'></textarea>
+                        <div class="mb-3">
+                            <label for="uploadButton" class="form-label m-0">or Upload JSON:</label>
+                            <input class="form-control form-control-sm" id="uploadButton" type="file"
+                                accept="application/json,text/plain">
+                        </div>
                         <div class="form-floating mb-3">
                             <select class="form-select" id="sort_order">
                                 <option value="0">file size - smallest first</option>
@@ -148,13 +154,11 @@
                             <label for="jump_files_by">Skip files by:</label>
 
                             <div class="input-group mb-3">
-                                <button type="button" class="btn btn-outline-secondary"
+                                <button type="button" class="input-group-text"
                                     id="file_jump_previous">&laquo;</button>
-
-                                <input type="number" class="m-0 form-control menu-command" id="jump_files_by" value="1"
+                                <input type="number" class="m-0 form-control" id="jump_files_by" value="1"
                                     min="1" aria-label="Number of files to skip by:">
-
-                                <button type="button" class="btn btn-outline-secondary"
+                                <button type="button" class="input-group-text"
                                     id="file_jump_next">&raquo;</button>
                             </div>
                         </div>
@@ -170,7 +174,10 @@
                         </div>
                         <div class="input-group mb-3">
                             <label class="input-group-text" for="jump_to_file_number">File no.</label>
+                            <button type="button" class="input-group-text"
+                                id="jump_to_file_first">&laquo;</button>
                             <input class="form-control" type="number" value="1" min="1" id="jump_to_file_number">
+                            <button type="button" class="input-group-text" id="jump_to_file_last">&raquo;</button>
                             <span class="input-group-text" id="file_length">of xxx files</span>
                         </div>
                         <button type="button" class="btn btn-secondary" id="submit_jump">Jump!</button>
@@ -221,14 +228,14 @@
                     <div class="accordion-body">
                         <div class="mb-3">
                             <label class="form-label">Hydrus Client API:</label>
-                            <div class="input-group mb-2">
-                                <label for="clientURL" class="input-group-text">URL</label>
-                                <input type="text" class="form-control" id="clientURL">
+                            <div class="form-floating mb-2">
+                                <input type="text" class="form-control" id="clientURL"><label for="clientURL">Client URL</label>
                             </div>
-                            <div class="input-group mb-2">
-                                <label for="clientKey" class="input-group-text">Access key</label>
+                            <div class="form-floating mb-2">
                                 <input type="text" class="form-control" id="clientKey">
+                                <label for="clientKey">Access key</label>
                             </div>
+                            <button type="button" class="btn btn-secondary" id="client_test">Test API access! </button>
                             <p>Status: <span id="clientStatus">...</span></p>
                         </div>
 
@@ -303,12 +310,14 @@
             </div>
 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="zoom_label">
+                <h2 class="accordion-header" id="viewerSettings_label">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#zoom_panel" aria-expanded="false" aria-controls="zoom_panel">
+                        data-bs-target="#viewerSettings_label" aria-expanded="false"
+                        aria-controls="viewerSettings_label">
                         Other Settings</button>
                 </h2>
-                <div id="zoom_panel" class="accordion-collapse collapse" aria-labelledby="zoom_label" style="">
+                <div id="viewerSettings_label" class="accordion-collapse collapse"
+                    aria-labelledby="viewerSettings_label" style="">
                     <div class="accordion-body">
                         <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" role="switch" id="fullscreen_mode">
@@ -321,8 +330,7 @@
                         <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" role="switch" id="floating_notes_checkbox">
                             <label class="form-check-label text-wrap" for="floating_notes_checkbox">Enable floating
-                                notes (will appear if
-                                there are notes available) </label>
+                                notes<br>(will appear if there are notes available) </label>
                         </div>
                         <div class="form-floating">
                             <select class="form-select" id="floating_notes_css">
@@ -334,6 +342,18 @@
                             </select>
                             <label for="floating_notes_css">Apply floating note style:</label>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="help_label">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#help_panel" aria-expanded="false" aria-controls="help_panel">Help</button>
+                </h2>
+                <div id="help_panel" class="accordion-collapse collapse" aria-labelledby="help_label" style="">
+                    <div class="accordion-body">
+                        <p>Show keyboard shortcuts here...</p>
                     </div>
                 </div>
             </div>

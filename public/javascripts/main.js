@@ -153,7 +153,7 @@ $.ajaxSetup({
     success: function (res) { console.debug(res) }
 });
 
-if (localStorage["command"] != undefined) { $("#command").val(localStorage["command"]); }
+if (localStorage["command"] != undefined) { try { $("#command").val(JSON.stringify(JSON.parse(localStorage["command"]), null, 4)); } catch { } }
 if (localStorage["clientKey"] != undefined) { $("#clientKey").val(localStorage["clientKey"]); }
 if (localStorage["clientURL"] != undefined) { $("#clientURL").val(localStorage["clientURL"]); }
 if (localStorage["custom_namespace"] != undefined) { $("#custom_namespace").val(localStorage["custom_namespace"]); }
@@ -446,7 +446,7 @@ export function loading_error() {
     return;
 }
 
-$("#submitButton").on("click", function () {
+$("#submitButton").on("click", async function () {
     $("#progress_bar").show();
     $("#progress_bar_status").text("");
     $(".progress").removeClass("border-danger").addClass("border-secondary");
@@ -463,9 +463,27 @@ $("#submitButton").on("click", function () {
     const order = sort_val_to_sort_int[$("#sort_order").val()]
 
     try {
+        if ($("#uploadButton")[0].files.length > 0) {
+            const file = await $("#uploadButton")[0].files[0].text();
+            var input = JSON.parse(file);
+        } else {
+            var input = JSON.parse($("#command").val());
+        }
 
-        const input = JSON.parse($("#command").val());
         $("#command").val(JSON.stringify(input, null, 4));
+
+        try {
+            localStorage.setItem("command", JSON.stringify(input));
+        } catch (err) {
+            if (
+                err instanceof DOMException &&
+                // everything except Firefox
+                err.name === "QuotaExceededError" ||
+                // Firefox
+                err.name === "NS_ERROR_DOM_QUOTA_REACHED") {
+                alert(`Search query too large to save.\nYou must enter your search query again the next time you visit HSV.`);
+            }
+        }
 
         const map = new Map(Object.entries(input));
 
@@ -487,7 +505,7 @@ $("#submitButton").on("click", function () {
         console.debug(JSON.stringify(searches));
 
     } catch (e) {
-        console.log(e);
+        console.error(e);
         if (e instanceof SyntaxError) {
             error_textInput($("#command"), "Search error: JSON Syntax error. Check your search input.");
         } else {
@@ -551,41 +569,25 @@ function testClient() {
     return;
 }
 
+$("#client_test").on("click", (e) => {
 
+    clientKey = $("#clientKey").val();
+    localStorage.setItem("clientKey", clientKey);
 
-//fill information and show element - instead of destroying and creating a new one on the fly for memory saving (reflows).
-//bug: when navigating from elemX to elemY, the file can take a bit to load - while still showing the previous file.
-//fix DONE: remove src before hiding so that while it loads user does not see anything. Added loading CSS for inbetween files
-//implement preloading system to load files ahead of time so that it shows as soon as user navs to it. (navRandomFile excluded - for that clear the preload and preload those next / prev to it. Repeat each time navRandomFile is called.)
-//for preload maybe use an array of elemX where the currently viewing file is in the middle? eg. elemP = [<p>,<p>,<p>,<p>,<p>]
-//Preloading is definitely needed, issue lies in the browser rendering the image: https://i.imgur.com/pJxzDFB.png
-//definitely need metadata to handle preloading of different file types instead of doing it one by one
-//preload next image while user is looking at current image.
-//DONE: copying floogulinc's hydrus.app method by preloading images (without display:none!) out of view.
-//turns out the tall orange test image is still taking a while to load.
+    clientURL = $("#clientURL").val().replace(/(http(|s):\/\/.*(|:.*?))(\/)$/gm, `$1`);
+    localStorage.setItem("clientURL", clientURL);
+
+    $.ajaxSetup({
+        headers: { "Hydrus-Client-API-Access-Key": clientKey }
+    });
+
+    testClient();
+});
 
 //keyboard nav
 $(document).on("keyup", (event) => {
     if ($(".leftSidebar").find(event.target)[0]) {//if leftSidebar
 
-        if ($("#clientKey").is(event.target)) {
-            $.ajaxSetup({
-                headers: { "Hydrus-Client-API-Access-Key": $(event.target).val() }
-            });
-            clientKey = $(event.target).val();
-            localStorage.setItem("clientKey", $(event.target).val());
-            testClient();
-        }
-
-        if ($("#clientURL").is(event.target)) {
-            clientURL = $(event.target).val().replace(/(http(|s):\/\/.*(|:.*?))(\/)$/gm, `$1`);
-            localStorage.setItem("clientURL", clientURL);
-            testClient();
-        }
-
-        if ($("#command").is(event.target)) {
-            localStorage.setItem("command", $(event.target).val());
-        }
 
         return;
     }
@@ -825,18 +827,19 @@ function initDragElement() { //https://stackoverflow.com/a/72293914/5791312
         return null;
     }
 }
+
 $(document).ready(function () {
     if ("serviceWorker" in navigator) {
         window.addEventListener('load', async () => {
             navigator.serviceWorker.register("/service-worker.js").then((registration) => {
-                console.log("Service Worker registered with scope:",
+                console.debug("Service Worker registered with scope:",
                     registration.scope);
             }).catch((err) => {
                 console.error("Service worker registration failed:", err);
             });
         });
-    }else{console.error("does not support service worker!");}
-    
+    } else { console.error("does not support service worker!"); }
+
     initDragElement();
 });
 

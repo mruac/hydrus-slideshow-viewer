@@ -37,7 +37,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
             };
             if (order != undefined) { data["file_sort_asc"] = order; }
             const status = `Getting search: ${g.client_named_Searches[i]}`;
-            console.info(status)
+            console.debug(status)
             $("#progress_bar_status").text(status);
 
             $.ajax({
