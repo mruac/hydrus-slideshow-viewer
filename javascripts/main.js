@@ -846,7 +846,7 @@ function initDragElement() { //https://stackoverflow.com/a/72293914/5791312
 $(document).ready(function () {
     if ("serviceWorker" in navigator) {
         window.addEventListener('load', async () => {
-            navigator.serviceWorker.register("/service-worker.js").then((registration) => {
+            navigator.serviceWorker.register("./service-worker.js").then((registration) => {
                 console.debug("Service Worker registered with scope:",
                     registration.scope);
             }).catch((err) => {
