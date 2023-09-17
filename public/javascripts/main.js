@@ -44,8 +44,8 @@ const sort_val_to_sort_int = {
     "3": [1, false],
     "4": [2, true],
     "5": [2, false], //api default
-    "6": [3],
-    "7": [4],
+    "6": [3, false],
+    "7": [4, false],
     "8": [5, true],
     "9": [5, false],
     "10": [6, true],
@@ -74,7 +74,7 @@ const sort_val_to_sort_int = {
     "33": [18, false],
     "34": [19, true],
     "35": [19, false],
-    "36": [20],
+    "36": [20, false],
     "37": [100, false],
     "38": [100, true]
 };
@@ -446,6 +446,22 @@ export function loading_error() {
     return;
 }
 
+$("#uploadButton").on("change", async (e) => {
+    const file = await e.target.files[0].text();
+    try {
+        $("#command").val(JSON.stringify(JSON.parse(file), null, 4));
+    } catch (e) {
+        console.error(e);
+        if (e instanceof SyntaxError) {
+            error_textInput($("#command"), "JSON Syntax error. Check your input.");
+        } else {
+            error_textInput($("#command"), e);
+        }
+
+        return;
+    }
+});
+
 $("#submitButton").on("click", async function () {
     $("#progress_bar").show();
     $("#progress_bar_status").text("");
@@ -463,13 +479,7 @@ $("#submitButton").on("click", async function () {
     const order = sort_val_to_sort_int[$("#sort_order").val()]
 
     try {
-        if ($("#uploadButton")[0].files.length > 0) {
-            const file = await $("#uploadButton")[0].files[0].text();
-            var input = JSON.parse(file);
-        } else {
-            var input = JSON.parse($("#command").val());
-        }
-
+        var input = JSON.parse($("#command").val());
         $("#command").val(JSON.stringify(input, null, 4));
 
         try {
@@ -502,7 +512,6 @@ $("#submitButton").on("click", async function () {
         }
 
         ui.getFileMetaData(searches, order[0], order[1]);
-        console.debug(JSON.stringify(searches));
 
     } catch (e) {
         console.error(e);
@@ -666,8 +675,14 @@ $("#jump_to_search_number").on("input", (e) => {
 });
 $("#jump_to_search_name").on("change", (e) => {
     $("#jump_to_search_number").val(parseInt($(e.target).val()) + 1);
-    $("#file_length").text(`of ${clientFiles[parseInt($(e.target).val())].length} files`);
+
+    let length = clientFiles[parseInt($(e.target).val())].length;
+    $("#file_length").text(`of ${length} files`);
+    if (parseInt($("#jump_to_file_number").val()) > length) { $("#jump_to_file_number").val(length); }
 });
+
+$("#jump_to_file_first").on("click", () => { $("#jump_to_file_number").val(1); });
+$("#jump_to_file_last").on("click", () => { $("#jump_to_file_number").val(clientFiles[parseInt($("#jump_to_search_name").val())].length); });
 
 $("#submit_jump").on("click", () => {
     const x = $("#jump_to_file_number");

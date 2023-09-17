@@ -62,15 +62,10 @@
                 </h2>
                 <div id="file_tag_panel" class="accordion-collapse collapse" aria-labelledby="file_tag_label">
                     <div class="accordion-body">
-                        <label for="command" class="form-label m-0">Enter JSON:</label>
-                        <textarea id="command" class="menu-textbox font-monospace form-control mb-3" rows="5"
-                            spellcheck="false"
-                            placeholder='{ "named search": &#10;["tag1", ["green","red"] ]&#10;}'></textarea>
-                        <div class="mb-3">
-                            <label for="uploadButton" class="form-label m-0">or Upload JSON:</label>
-                            <input class="form-control form-control-sm" id="uploadButton" type="file"
-                                accept="application/json,text/plain">
-                        </div>
+                        <label for="command" class="form-label">Enter JSON; or </label>
+                        <label for="uploadButton" class="btn btn-secondary btn-sm">Import JSON</label>
+                        <input class="hidden" id="uploadButton" type="file" accept="application/json,text/plain">
+                        <textarea id="command" class="menu-textbox font-monospace form-control mb-3" rows="5" spellcheck="false" placeholder="{ &quot;named search&quot;: &#10;[&quot;tag1&quot;, [&quot;green&quot;,&quot;red&quot;] ]&#10;}"></textarea>
                         <div class="form-floating mb-3">
                             <select class="form-select" id="sort_order">
                                 <option value="0">file size - smallest first</option>
@@ -78,7 +73,7 @@
                                 <option value="2">duration - shortest first</option>
                                 <option value="3">duration - longest first</option>
                                 <option value="4">import time - oldest first</option>
-                                <option value="5" selected>import time - newest first</option>
+                                <option value="5" selected="">import time - newest first</option>
                                 <option value="6">filetype</option>
                                 <option value="7">random</option>
                                 <option value="8">width - slimmest first</option>
@@ -123,9 +118,7 @@
                             <button type="button" class="btn btn-secondary" id="submitButton">
                                 Submit
                             </button>
-                            <a class="btn btn-link"
-                                href="https://hydrusnetwork.github.io/hydrus/developer_api.html#get_files_search_files"
-                                target="_blank" rel="noreferrer noopener" role="button">Search files reference</a>
+                            <a class="btn btn-link" href="https://hydrusnetwork.github.io/hydrus/developer_api.html#get_files_search_files" target="_blank" rel="noreferrer noopener" role="button">Search files reference</a>
                         </div>
                     </div>
                 </div>

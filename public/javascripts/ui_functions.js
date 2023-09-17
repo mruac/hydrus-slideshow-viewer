@@ -102,8 +102,8 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 if (doNamespaceSort) {
                     for (let index = 0; index < result.length; index++) {
                         result[index] = tag.sortFiles_namespace(result[index], $("#custom_namespace").val());
+                    if (order) { result[index].reverse(); }
                     }
-                    if (order) { result[index].reverse(); } //FIXME: Index undefined when doing reversed namespace sort
                 }
 
                 let numberOfFiles = 0;

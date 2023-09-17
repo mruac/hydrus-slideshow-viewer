@@ -94,7 +94,7 @@ export function loadFiles() {
 
 export function sortFiles_namespace(metadatas, sortOption) {
     //"series-creator-title-volume-chapter-page"
-    sortOption = sortOption.split("-").reverse();
+    sortOption = sortOption.toLowerCase().split("-").reverse();
     //loop through all files, sorting them based on the first matching tag with the selected namespace, for each namespace
     const tag_services = metadatas[0]?.tags;
     if (tag_services === undefined) { return metadatas; }
@@ -107,15 +107,6 @@ export function sortFiles_namespace(metadatas, sortOption) {
     sortOption.forEach(namespace => {
         metadatas.sort((a, b) => {
             //uses the first matching tag that has the namespace
-            //FIXME: When including this search, TypeError: Cannot read properties of undefined (reading 'find') on a.tags[all_known_tags].display_tags?.["0"].find()
-            /*    
-            "intro": [
-            "-human focus",
-            "-is tagged*",
-            "system:limit is 5",
-            "-to *"
-            ]
-            */
             try {
                 a = a.tags[all_known_tags].display_tags?.["0"].find((tag) => { return tag.startsWith(`${namespace}:`) });
                 b = b.tags[all_known_tags].display_tags?.["0"].find((tag) => { return tag.startsWith(`${namespace}:`) });
