@@ -540,9 +540,16 @@ export function set_clientFiles(files) {
 }
 
 function testClient() {
+    clientKey = $('#clientKey').val();
+    clientURL = $('#clientURL').val().replace(/(http(|s):\/\/.*(|:.*?))(\/)$/gm, `$1`);
+
     if(clientURL.length === 0 || clientKey.length === 0){
         return;
     }
+    
+    $.ajaxSetup({
+        headers: { 'Hydrus-Client-API-Access-Key': clientKey }
+    });
 
     $.ajax({
         // url: clientURL + `/get_services`,
@@ -596,14 +603,6 @@ function testClient() {
 }
 
 $('#client_test').on('click', (e) => {
-
-    clientKey = $('#clientKey').val();
-    clientURL = $('#clientURL').val().replace(/(http(|s):\/\/.*(|:.*?))(\/)$/gm, `$1`);
-
-    $.ajaxSetup({
-        headers: { 'Hydrus-Client-API-Access-Key': clientKey }
-    });
-
     testClient();
 });
 

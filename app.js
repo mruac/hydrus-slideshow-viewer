@@ -15,4 +15,4 @@ app.get('/', function(req, res, next) {
   res.render('index', { title: 'Hydrus Slideshow Viewer' });
 });
 
-app.listen(3415, () => console.log(`Server listening on port: 3415`));
+app.listen(3415, () => console.log(`Server listening on port: http://172.0.0.1:3415`));
