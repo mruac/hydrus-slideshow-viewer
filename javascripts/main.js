@@ -3,7 +3,7 @@ import * as tag from "./tag_functions.js";
 import * as ui from "./ui_functions.js";
 
 export let clientKey = "",
-    clientURL = "http://127.0.0.1:45869",
+    clientURL = "",
     clientFiles = [],
     client_named_Searches = [],
     menuTimeout, cursor_timeout,
@@ -361,11 +361,14 @@ $(document).on("pointerup", function (e) {
         }
 
     } else {
-        if ($(e.target).parents("#fileCanvas")[0]) {
+        if ($(e.target).parents("#fileCanvas")[0] || $(e.target).is("#fileCanvas")) {
             let pointer_end = e;
             const directionX = pointer_end.screenX - pointer_start.screenX;
             //don't nav while zooming, but allow toggleUI()
-            if (directionX < SWIPE_THRESHOLD && directionX > -(SWIPE_THRESHOLD)) {
+            if (
+                (directionX < SWIPE_THRESHOLD && directionX > -(SWIPE_THRESHOLD) && panzoom_elem.isPaused())
+                || !panzoom_elem.isPaused()
+                ) {
                 toggleUI();
             } else {
                 if (panzoom_elem.isPaused()) {
@@ -463,6 +466,10 @@ $("#uploadButton").on("change", async (e) => {
 });
 
 $("#submitButton").on("click", async function () {
+    if(clientURL.length === 0 || clientKey.length === 0){
+        error_textInput($("#command"), "Client URL and/or Key not set. Please set them in Settings.");
+        return;
+    }
     $("#progress_bar").show();
     $("#progress_bar_status").text("");
     $(".progress").removeClass("border-danger").addClass("border-secondary");
@@ -533,6 +540,10 @@ export function set_clientFiles(files) {
 }
 
 function testClient() {
+    if(clientURL.length === 0 || clientKey.length === 0){
+        return;
+    }
+
     $.ajax({
         // url: clientURL + `/get_services`,
         url: clientURL + `/verify_access_key`,
@@ -541,6 +552,8 @@ function testClient() {
         method: "GET"
     }).done(function () {
         $("#clientStatus").text("Success").css("color", "lime");
+        localStorage.setItem("clientKey", clientKey);
+        localStorage.setItem("clientURL", clientURL);
 
         $.ajax({
             url: clientURL + `/get_services`,
@@ -574,6 +587,10 @@ function testClient() {
         });
     }).fail(function () {
         $("#clientStatus").text("Fail").css("color", "red");
+        clientKey = "";
+        clientURL = "";    
+        localStorage.setItem("clientKey", clientKey);
+        localStorage.setItem("clientURL", clientURL);
     });
     return;
 }
@@ -581,10 +598,7 @@ function testClient() {
 $("#client_test").on("click", (e) => {
 
     clientKey = $("#clientKey").val();
-    localStorage.setItem("clientKey", clientKey);
-
     clientURL = $("#clientURL").val().replace(/(http(|s):\/\/.*(|:.*?))(\/)$/gm, `$1`);
-    localStorage.setItem("clientURL", clientURL);
 
     $.ajaxSetup({
         headers: { "Hydrus-Client-API-Access-Key": clientKey }

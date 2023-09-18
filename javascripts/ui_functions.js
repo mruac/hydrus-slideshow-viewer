@@ -56,38 +56,43 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                         $("#progress_bar_status").text("Search cancelled.");
                         return;
                     }
-                } else if (response.file_ids.length === 0) {
-                                //TESTME: discard search if there are no results.
-                    i++;
-                    $(".progress-bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
-
-                    //recurse with the next search
-                    next();
-
                 }
-                $.ajax({
-                    crossDomain: true,
-                    method: "GET",
-                    url: g.clientURL + `/get_files/file_metadata`,
-                    data: {
-                        "file_ids": JSON.stringify(response.file_ids),
-                        "include_notes": true
-                    },
-                    dataType: 'json'
-                }).done(function (response) {
-                    if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
-
-                    searches[i] = response.metadata;
-
+                if (response.file_ids.length === 0) {
+                    // discard search if there are no results.
+                    searches[i] = [];
                     i++;
                     $(".progress-bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
 
                     //recurse with the next search
                     next();
-                }).fail((err) => {
-                    g.loading_error();
-                    g.error_textInput($("#command"), `Error on search "${g.client_named_Searches[i]}": ${err.responseText}`);
-                });
+
+                } else {
+                    $.ajax({
+                        crossDomain: true,
+                        method: "GET",
+                        url: g.clientURL + `/get_files/file_metadata`,
+                        data: {
+                            "file_ids": JSON.stringify(response.file_ids),
+                            "include_notes": true
+                        },
+                        dataType: 'json'
+                    }).done(function (response) {
+                        if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
+
+                        searches[i] = response.metadata;
+
+                        i++;
+                        $(".progress-bar").css("width", `${(i / (searches.length - 1)) * 100}%`);
+
+                        //recurse with the next search
+                        next();
+                    }).fail((err) => {
+                        g.loading_error();
+
+                        //FIXME: when it errors, the error is actually for the previous search.
+                        g.error_textInput($("#command"), `Error on search "${g.client_named_Searches[i]}": ${err.responseText}`);
+                    });
+                }
             }).fail((err) => {
                 g.loading_error();
                 g.error_textInput($("#command"), `Error on search "${g.client_named_Searches[i]}": ${err.responseText}`);
@@ -102,7 +107,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 if (doNamespaceSort) {
                     for (let index = 0; index < result.length; index++) {
                         result[index] = tag.sortFiles_namespace(result[index], $("#custom_namespace").val());
-                    if (order) { result[index].reverse(); }
+                        if (order) { result[index].reverse(); }
                     }
                 }
 
@@ -118,7 +123,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 g.set_clientFiles(result);
                 for (let index = -(num_files_preload); index <= num_files_preload; index++) {
                     const metadata = file.navFile(index, true);
-                    metadata["elem"] = loadFile(metadata)
+                    metadata["elem"] = loadFile(metadata);
                 }
 
                 tag.loadFiles();
@@ -185,11 +190,17 @@ export function update_file_numbers() {
 }
 
 export function loadFileTags(metadata) {
+    if(metadata.mime === "no_file"){
+        $("#committags").hide();
+        $("#taglist").val("");
+        $("#taglist").attr("readonly", "");
+        return;
+    }
     //switch tag services
     const service_keys = metadata?.tags;
     const selected_service_key = $("#tagRepositoryList").val();
     $("#taglist").val("");
-    if (service_keys === undefined) {
+    if (service_keys === undefined && metadata.mime != "no_file") {
         const err_msg = `No tags found for [${file.currentPos.y}][${file.currentPos.x}]`;
         console.error(err_msg);
         $("#taglist").val(err_msg);
@@ -229,9 +240,20 @@ export function loadFileTags(metadata) {
 }
 
 export function loadFileNotes(metadata) {
+
     const notes = metadata?.notes;
     const note_button_options = $("#file_info_notes .dropdown-menu");
     const note_field = $("#file_info_notefield");
+    
+    if(metadata.mime === "no_file"){
+        $(".popup").addClass("d-none");
+        $(".popup-header span").text("");
+        $(".popup-content p").text("");
+        note_button_options.find("li").remove();
+        note_field.find("div").remove();
+        $(".popup select").children("option").remove();    
+        $("#file_info_notes span").text("No notes!");
+        return;}
 
     $(".popup").addClass("d-none");
     $(".popup-header span").text("");
