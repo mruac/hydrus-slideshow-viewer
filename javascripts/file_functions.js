@@ -1,23 +1,23 @@
-import * as file from "./file_functions.js";
-import * as tag from "./tag_functions.js";
-import * as ui from "./ui_functions.js";
-import * as g from "./main.js";
+import * as file from './file_functions.js';
+import * as tag from './tag_functions.js';
+import * as ui from './ui_functions.js';
+import * as g from './main.js';
 
-export var currentPos = { "x": 0, "y": 0 };
+export var currentPos = { 'x': 0, 'y': 0 };
 
 
 
 export function createElem(type, content) {
-    const url = `${g.clientURL}/get_files/file?Hydrus-Client-API-Access-Key=${g.clientKey}&file_id=${content["file_id"]}`;
+    const url = `${g.clientURL}/get_files/file?Hydrus-Client-API-Access-Key=${g.clientKey}&file_id=${content['file_id']}`;
     switch (type) {
-        case "p":
+        case 'p':
             return $('<p/>', {
             }).text(content);
-        case "img":
+        case 'img':
             return $('<img/>', {
                 'src': url,
             });
-        case "video": case "audio":
+        case 'video': case 'audio':
             let elem = $(`<${type}/>`, {
                 'controls': '',
                 'loop': '',
@@ -73,58 +73,58 @@ export function navFile(increment, requireReturn = false) {
         console.debug(`loaded [${y}][${x}]`)
 
         //TODO: CSS Transform with JS in px depending on viewport dims NOT %. For testing 999999px is used for now.
-        const filePlaceholder = $("#filePlaceholder").children();
+        const filePlaceholder = $('#filePlaceholder').children();
         //filePlaceholder[i] = find the one that is hidden
-        let i = $(".visible").index();
+        let i = $('.visible').index();
 
         const num_files_preload_batch = Math.floor(ui.num_files_preload / 2);
 
         if (increment > 0) {//+
-            //check if ["elem"] exists, if not, preload around it
+            //check if ['elem'] exists, if not, preload around it
 
-            //preload next batch of  files if there is navFile(25, true)["elem"] === undefined
-            if ((navFile(num_files_preload_batch, true)["elem"] === undefined)
+            //preload next batch of  files if there is navFile(25, true)['elem'] === undefined
+            if ((navFile(num_files_preload_batch, true)['elem'] === undefined)
             ) {
                 for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
                     const metadata = file.navFile((index), true);
-                    metadata["elem"] = ui.loadFile(metadata)
+                    metadata['elem'] = ui.loadFile(metadata)
                 }
                 console.debug(`preloaded next ${num_files_preload_batch} files`)
             }
 
             //hide filePlaceholder[i], show next file in the next elem, load the file after in the elem after.
             if (increment === 1) {
-                $(filePlaceholder[i]).removeClass("visible").addClass("hidden");
-                $(filePlaceholder[i]).children("audio, video").trigger("pause");
+                $(filePlaceholder[i]).removeClass('visible').addClass('hidden');
+                $(filePlaceholder[i]).children('audio, video').trigger('pause');
                 if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
-                $(filePlaceholder[i]).removeClass("hidden").addClass("visible");
-                $(filePlaceholder[i]).children("audio, video").trigger("play");
+                $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
+                $(filePlaceholder[i]).children('audio, video').trigger('play');
                 if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
                 $(filePlaceholder[i].children[0]).remove();
-                $(filePlaceholder[i]).append(navFile(1, true)["elem"]);
+                $(filePlaceholder[i]).append(navFile(1, true)['elem']);
             } else {
                 jumpToFile(currentPos.y, currentPos.x);
             }
 
         } else if (increment < 0) {//-
-            if ((navFile(-(num_files_preload_batch), true)["elem"] === undefined)
+            if ((navFile(-(num_files_preload_batch), true)['elem'] === undefined)
             ) {
                 for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
                     const metadata = file.navFile(-(index), true);
-                    metadata["elem"] = ui.loadFile(metadata)
+                    metadata['elem'] = ui.loadFile(metadata)
                 }
                 console.debug(`preloaded next ${num_files_preload_batch} files`)
             }
 
             if (increment === -1) {
-                $(filePlaceholder[i]).removeClass("visible").addClass("hidden");
-                $(filePlaceholder[i]).children("audio, video").trigger("pause");
+                $(filePlaceholder[i]).removeClass('visible').addClass('hidden');
+                $(filePlaceholder[i]).children('audio, video').trigger('pause');
                 if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
-                $(filePlaceholder[i]).removeClass("hidden").addClass("visible");
-                $(filePlaceholder[i]).children("audio, video").trigger("play");
+                $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
+                $(filePlaceholder[i]).children('audio, video').trigger('play');
                 if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
                 $(filePlaceholder[i].children[0]).remove();
-                $(filePlaceholder[i]).append(navFile(-1, true)["elem"]);
+                $(filePlaceholder[i]).append(navFile(-1, true)['elem']);
             } else {
                 jumpToFile(currentPos.y, currentPos.x);
             }
@@ -139,8 +139,8 @@ export function navRandomFile() {
 
     for (let index = -(ui.num_files_preload); index <= ui.num_files_preload; index++) {
         const metadata = file.navFile(index, true);
-        if (metadata["elem"] === undefined) {
-            metadata["elem"] = ui.loadFile(metadata)
+        if (metadata['elem'] === undefined) {
+            metadata['elem'] = ui.loadFile(metadata)
         }
     }
     console.debug(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
@@ -155,8 +155,8 @@ export function jumpToFile(search_number = 0, file_number = 0) {
     currentPos.y = search_number;
     for (let index = -(ui.num_files_preload); index <= ui.num_files_preload; index++) {
         const metadata = file.navFile(index, true);
-        if (metadata["elem"] === undefined) {
-            metadata["elem"] = ui.loadFile(metadata)
+        if (metadata['elem'] === undefined) {
+            metadata['elem'] = ui.loadFile(metadata)
         }
     }
     console.debug(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
