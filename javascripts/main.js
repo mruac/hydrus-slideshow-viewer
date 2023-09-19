@@ -546,6 +546,8 @@ function testClient() {
     if(clientURL.length === 0 || clientKey.length === 0){
         return;
     }
+
+    $('#clientStatus').text('Testing...').css('color', '');
     
     $.ajaxSetup({
         headers: { 'Hydrus-Client-API-Access-Key': clientKey }
@@ -592,8 +594,9 @@ function testClient() {
             tag_repos_elem.append(local_tags_elem);
             tag_repos_elem.append(remote_tags_elem);
         });
-    }).fail(function () {
-        $('#clientStatus').text('Fail').css('color', 'red');
+    }).fail(function (jqXHR) {
+        var status = jqXHR.status === 0 ? 'No response / Blocked' : jqXHR.status;
+        $('#clientStatus').text(`Fail (${status})`).css('color', 'red');
         clientKey = '';
         clientURL = '';    
         localStorage.setItem('clientKey', clientKey);
@@ -609,8 +612,6 @@ $('#client_test').on('click', (e) => {
 //keyboard nav
 $(document).on('keyup', (event) => {
     if ($('.leftSidebar').find(event.target)[0]) {//if leftSidebar
-
-
         return;
     }
 
