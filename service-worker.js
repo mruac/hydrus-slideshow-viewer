@@ -1,13 +1,13 @@
 const CACHE_NAME = 'hsv_cache';
 const URLS_TO_CACHE = [
-    '/index.html',
-    '/javascripts/jquery-3.5.1.js',
-    '/javascripts/anvaka_panzoom.js',
-    '/javascripts/ui_functions.js',
-    '/javascripts/file_functions.js',
-    '/javascripts/tag_functions.js',
-    '/javascripts/main.js',
-    '/stylesheets/style.css',
+    './index.html',
+    './javascripts/jquery-3.5.1.js',
+    './javascripts/anvaka_panzoom.js',
+    './javascripts/ui_functions.js',
+    './javascripts/file_functions.js',
+    './javascripts/tag_functions.js',
+    './javascripts/main.js',
+    './stylesheets/style.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css'
 ];
 
