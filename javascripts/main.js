@@ -362,11 +362,10 @@ $(document).on('pointerup', function (e) {
             if (
                 (directionX < SWIPE_THRESHOLD && directionX > -(SWIPE_THRESHOLD) && panzoom_elem.isPaused())
                 || !panzoom_elem.isPaused()
-            ) {
+                ) {
                 toggleUI();
             } else {
                 if (panzoom_elem.isPaused()) {
-                    //do ur scrollbar ignore here
                     if (directionX > SWIPE_THRESHOLD) { //+, swipe left
                         file.navFile(-1);
                     }
@@ -543,7 +542,7 @@ function testClient() {
     }
 
     $('#clientStatus').text('Testing...').css('color', '');
-
+    
     $.ajaxSetup({
         headers: { 'Hydrus-Client-API-Access-Key': clientKey }
     });
@@ -593,7 +592,7 @@ function testClient() {
         var status = jqXHR.status === 0 ? 'No response / Blocked' : jqXHR.status;
         $('#clientStatus').text(`Fail (${status})`).css('color', 'red');
         clientKey = '';
-        clientURL = '';
+        clientURL = '';    
         localStorage.setItem('clientKey', clientKey);
         localStorage.setItem('clientURL', clientURL);
     });
