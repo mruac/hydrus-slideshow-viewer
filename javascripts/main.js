@@ -13,8 +13,7 @@ export let clientKey = '',
     nav_increment = 1,
     panzoom_persist = false,
     floating_notes_persist = false,
-    pointer_start = null,
-    fitToggle = false;
+    pointer_start = null;
 
 let is_fullscreenchange_event = true;
 
@@ -192,7 +191,7 @@ $('#floating_notes_css').on('change', function (event) {
 $(document).on('keydown', (e) => {
     if (e.repeat) return;
 
-    if (e.key === 'Shift') {
+    if (e.key === 'Control') {
         panzoom_elem.resume();
         $('[for=\'zoomToggle\']').addClass('active');
 
@@ -201,15 +200,15 @@ $(document).on('keydown', (e) => {
 
 $(document).on('keyup', (e) => {
 
-    if (e.key === 'Shift') {
+    if (e.key === 'Control') {
         panzoom_elem.pause();
         $('[for=\'zoomToggle\']').removeClass('active');
 
         if (!panzoom_persist) {
-            // resetZoom(panzoom_elem);
-            // setTimeout(() => {
-            //     $('#filePlaceholder').removeAttr('style');
-            // }, 50);
+            resetZoom(panzoom_elem);
+            setTimeout(() => {
+                $('#filePlaceholder').removeAttr('style');
+            }, 50);
         }
     }
 });
@@ -238,55 +237,50 @@ $('#zoomToggle').on('change', (e) => {
     }
 });
 
-$('#window_fitToggle').on('change', (e) => {
-    if ($(e.target).is(':checked')) {
-        fitToggle = true;
-        const currentFile = '';
-        extendToWindow(currentFile);
-        //FIXME: tell the scrollNav() to scroll when end of image has been reached.
-        //TODO: convert vertical scroll into horizontal scroll so the mouse scroll and scroll just fine.
-        //maybe rotate the container and image 90 degrees?
+$('#window_fitToggle').on('click', () => {
+    const el = $('#window_fitToggle');
+    const el_visible = el.find('svg:not(.hidden)');
+    const file_metadata = file.navFile(0, true);
 
-        //call this each time navFile() is called to update the $('#filePlaceholder div *').css()
-        //call this on viewport resize
+    el_visible.addClass('hidden');
+    $('#fileCanvas .visible *').css('position', '');
 
-    } else {
-        fitToggle = false;
-        resetFit();
+    switch (true) {
+        //fit width
+        case el_visible.hasClass('bi-arrows-fullscreen'):
+            el.find('.bi-arrows').removeClass('hidden');
+            $('#css').html(
+                '#fileCanvas img, #fileCanvas video {width: 100%; height: initial;}'
+            );
+            if ((file_metadata.height * (window.innerWidth / file_metadata.width)) > window.innerHeight) {
+                $('#fileCanvas .visible *').css('position', 'initial');
+            }
+            break;
+
+        //fit height
+        case el_visible.hasClass('bi-arrows'):
+            el.find('.bi-arrows-vertical').removeClass('hidden');;
+            $('#css').html(
+                '#fileCanvas img, #fileCanvas video {width: initial; height: 100%;}'
+            );
+            break;
+
+        //shrink to fit / original size
+        case el_visible.hasClass('bi-arrows-vertical'):
+            el.find('.bi-aspect-ratio').removeClass('hidden');;
+            $('#css').html(
+                '#fileCanvas img, #fileCanvas video {max-width: 100%; max-height: 100%;}'
+            );
+            break;
+
+        //shrink/expand to fit (default)
+        case el_visible.hasClass('bi-aspect-ratio'):
+            el.find('.bi-arrows-fullscreen').removeClass('hidden');;
+            $('#css').html(
+                '#fileCanvas img, #fileCanvas video {width: 100%; height: 100%;}'
+            );
+            break;
     }
-
-    function extendToWindow(file) {
-        //the overflow works fine when fit
-        //nav() fires before scroll down
-        //it allows scroll up THEN nav() fires.
-        $('#fileCanvas').css({
-            'position': 'absolute',
-            'overflow': 'auto',
-            '-ms-overflow-style': 'none',
-            'scrollbar-width': 'none'
-        });
-        //calculate if file is tall or wide
-        //file.videoWidth > file.videoHeight
-        if (file.naturalWidth > file.naturalHeight) {
-            //if wide
-            $('#filePlaceholder div *').css({
-                'width': 'initial',
-                'height': '100%'
-            });
-        } else {
-            //if tall
-            $('#filePlaceholder div *').css({
-                'width': '100%',
-                'height': 'initial'
-            });
-        }
-    }
-
-    function resetFit() {
-        $('#filePlaceholder div *').removeAttr('style');
-    }
-
-
 });
 
 $('#panzoom_persist').on('change', (e) => {
@@ -368,10 +362,11 @@ $(document).on('pointerup', function (e) {
             if (
                 (directionX < SWIPE_THRESHOLD && directionX > -(SWIPE_THRESHOLD) && panzoom_elem.isPaused())
                 || !panzoom_elem.isPaused()
-                ) {
+            ) {
                 toggleUI();
             } else {
                 if (panzoom_elem.isPaused()) {
+                    //do ur scrollbar ignore here
                     if (directionX > SWIPE_THRESHOLD) { //+, swipe left
                         file.navFile(-1);
                     }
@@ -466,7 +461,7 @@ $('#uploadButton').on('change', async (e) => {
 });
 
 $('#submitButton').on('click', async function () {
-    if(clientURL.length === 0 || clientKey.length === 0){
+    if (clientURL.length === 0 || clientKey.length === 0) {
         error_textInput($('#command'), 'Client URL and/or Key not set. Please set them in Settings.');
         return;
     }
@@ -543,12 +538,12 @@ function testClient() {
     clientKey = $('#clientKey').val();
     clientURL = $('#clientURL').val().replace(/(http(|s):\/\/.*(|:.*?))(\/)$/gm, `$1`);
 
-    if(clientURL.length === 0 || clientKey.length === 0){
+    if (clientURL.length === 0 || clientKey.length === 0) {
         return;
     }
 
     $('#clientStatus').text('Testing...').css('color', '');
-    
+
     $.ajaxSetup({
         headers: { 'Hydrus-Client-API-Access-Key': clientKey }
     });
@@ -598,7 +593,7 @@ function testClient() {
         var status = jqXHR.status === 0 ? 'No response / Blocked' : jqXHR.status;
         $('#clientStatus').text(`Fail (${status})`).css('color', 'red');
         clientKey = '';
-        clientURL = '';    
+        clientURL = '';
         localStorage.setItem('clientKey', clientKey);
         localStorage.setItem('clientURL', clientURL);
     });
@@ -734,23 +729,33 @@ $('#file_info_notefield').on('activate.bs.scrollspy', function (e) {
     note_button_label.text(active_note).prop('title', active_note);
 });
 
-//scroll nav
-//NOTE:uncomment me once panzoom has been implemented properly
-$('#fileCanvas').on('mousewheel', function (event) {
-    if (event.ctrlKey) { event.preventDefault(); }
-    // if(event.ctrlKey || event.altKey || event.metaKey || event.shiftKey){
-    //     return;
-    // }
-    // if ($('.leftSidebar').find(event.target)[0]) { return; }
+$('#fileCanvas').on('wheel', function (event) {
+    // console.log(event);
+    if (event.ctrlKey) { event.preventDefault(); } //prevent ctrl zoom for panzoom shortcut
+
     if (panzoom_elem.isPaused()) {
-        if (!fitToggle) {
-            if (event.originalEvent.wheelDelta / 120 > 0) {//scroll up
+        event.preventDefault(); //prevent default wheel event (scrolling)
+
+        //file scroll (shift+wheel)
+        if ( event.shiftKey) {
+            //it is scrollable, and shift key is held
+            const fit_button = $('#window_fitToggle svg:not(.hidden)');
+            if (fit_button.hasClass('bi-arrows')) {
+                //if fit to width, do vertical scroll
+                $('#filePlaceholder').scrollTop($('#filePlaceholder').scrollTop() + event.originalEvent.deltaY);
+            } else if (fit_button.hasClass('bi-arrows-vertical')) {
+                //if fit to height, do horizontal scroll
+                $('#filePlaceholder').scrollLeft($('#filePlaceholder').scrollLeft() + event.originalEvent.deltaY);
+            }
+        } else {
+            //file nav
+            if (event.originalEvent.deltaY < 0) {//scroll up
                 file.navFile(-1);
             }
             else { //scroll down
                 file.navFile(1);
             }
-        } else { }
+        }
     }
 });
 
@@ -782,10 +787,10 @@ function adjustDraggableHeight() {
 
 function toggleUI() {
     clearTimeout(menuTimeout);
-    $('[for=zoomToggle], [for=window_fitToggle], #leftSidebarToggle, #rightSidebarToggle').fadeIn(400);
+    $('[for=zoomToggle], #window_fitToggle, #leftSidebarToggle, #rightSidebarToggle').fadeIn(400);
 
     menuTimeout = setTimeout(() => {
-        $('[for=zoomToggle], [for=window_fitToggle], #leftSidebarToggle, #rightSidebarToggle').fadeOut(400);
+        $('[for=zoomToggle], #window_fitToggle, #leftSidebarToggle, #rightSidebarToggle').fadeOut(400);
     }, menuTimeout_delay);
 }
 

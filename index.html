@@ -20,15 +20,17 @@
     <meta name="msapplication-config" content="./icons/browserconfig.xml">
     <meta name="theme-color" content="#4a4a4a">
 
-    <script src="./javascripts/jquery-3.5.1.js" type="module"></script>
+    <script src="./javascripts/jquery-3.7.1.min.js" type="module"></script>
     <script src="./javascripts/anvaka_panzoom.js"></script>
     <script src="./javascripts/ui_functions.js" type="module"></script>
     <script src="./javascripts/file_functions.js" type="module"></script>
     <script src="./javascripts/tag_functions.js" type="module"></script>
     <script src="./javascripts/main.js" type="module"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous" />
-    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" /> -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="./stylesheets/style.css" />
     <style>
         .hidden {
@@ -64,8 +66,11 @@
                     <div class="accordion-body">
                         <label for="command" class="form-label">Enter JSON; or </label>
                         <label for="uploadButton" class="btn btn-secondary btn-sm">Import JSON</label>
-                        <input class="visually-hidden-focusable" id="uploadButton" type="file" accept="application/json,text/plain">
-                        <textarea id="command" class="menu-textbox font-monospace form-control mb-3" rows="5" spellcheck="false" placeholder="{ &quot;named search&quot;: &#10;[&quot;tag1&quot;, [&quot;green&quot;,&quot;red&quot;] ]&#10;}"></textarea>
+                        <input class="visually-hidden-focusable" id="uploadButton" type="file"
+                            accept="application/json,text/plain">
+                        <textarea id="command" class="menu-textbox font-monospace form-control mb-3" rows="5"
+                            spellcheck="false"
+                            placeholder="{ &quot;named search&quot;: &#10;[&quot;tag1&quot;, [&quot;green&quot;,&quot;red&quot;] ]&#10;}"></textarea>
                         <div class="form-floating mb-3">
                             <select class="form-select" id="sort_order">
                                 <option value="0">file size - smallest first</option>
@@ -118,7 +123,9 @@
                             <button type="button" class="btn btn-secondary" id="submitButton">
                                 Submit
                             </button>
-                            <a class="btn btn-link" href="https://hydrusnetwork.github.io/hydrus/developer_api.html#get_files_search_files" target="_blank" rel="noreferrer noopener" role="button">Search files reference</a>
+                            <a class="btn btn-link"
+                                href="https://hydrusnetwork.github.io/hydrus/developer_api.html#get_files_search_files"
+                                target="_blank" rel="noreferrer noopener" role="button">Search files reference</a>
                         </div>
                     </div>
                 </div>
@@ -147,12 +154,10 @@
                             <label for="jump_files_by">Skip files by:</label>
 
                             <div class="input-group mb-3">
-                                <button type="button" class="input-group-text"
-                                    id="file_jump_previous">&laquo;</button>
-                                <input type="number" class="m-0 form-control" id="jump_files_by" value="1"
-                                    min="1" aria-label="Number of files to skip by:">
-                                <button type="button" class="input-group-text"
-                                    id="file_jump_next">&raquo;</button>
+                                <button type="button" class="input-group-text" id="file_jump_previous">&laquo;</button>
+                                <input type="number" class="m-0 form-control" id="jump_files_by" value="1" min="1"
+                                    aria-label="Number of files to skip by:">
+                                <button type="button" class="input-group-text" id="file_jump_next">&raquo;</button>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -167,8 +172,7 @@
                         </div>
                         <div class="input-group mb-3">
                             <label class="input-group-text" for="jump_to_file_number">File no.</label>
-                            <button type="button" class="input-group-text"
-                                id="jump_to_file_first">&laquo;</button>
+                            <button type="button" class="input-group-text" id="jump_to_file_first">&laquo;</button>
                             <input class="form-control" type="number" value="1" min="1" id="jump_to_file_number">
                             <button type="button" class="input-group-text" id="jump_to_file_last">&raquo;</button>
                             <span class="input-group-text" id="file_length">of xxx files</span>
@@ -222,7 +226,8 @@
                         <div class="mb-3">
                             <label class="form-label">Hydrus Client API:</label>
                             <div class="form-floating mb-2">
-                                <input type="text" class="form-control" id="clientURL"><label for="clientURL">Client URL</label>
+                                <input type="text" class="form-control" id="clientURL"><label for="clientURL">Client
+                                    URL</label>
                             </div>
                             <div class="form-floating mb-2">
                                 <input type="text" class="form-control" id="clientKey">
@@ -372,15 +377,34 @@
             </svg>
         </label>
 
-        <input class="btn-check" id="window_fitToggle" type="checkbox" autocomplete="off"
-            aria-controls="window_fitToggle">
-        <label class="btn btn-outline-primary" for="window_fitToggle">
+        <button class="btn btn-outline-primary" id="window_fitToggle">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                class="bi bi-arrows-angle-expand" viewBox="0 0 16 16">
+                class="bi bi-arrows-fullscreen" viewBox="0 0 16 16">
                 <path fill-rule="evenodd"
-                    d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707z" />
+                    d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707zm0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707zm-4.344 0a.5.5 0 0 1-.707 0L1.025 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707z" />
             </svg>
-        </label>
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-arrows hidden" viewBox="0 0 16 16">
+                <path
+                    d="M1.146 8.354a.5.5 0 0 1 0-.708l2-2a.5.5 0 1 1 .708.708L2.707 7.5h10.586l-1.147-1.146a.5.5 0 0 1 .708-.708l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L13.293 8.5H2.707l1.147 1.146a.5.5 0 0 1-.708.708l-2-2Z" />
+            </svg>
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-arrows-vertical hidden" viewBox="0 0 16 16">
+                <path
+                    d="M8.354 14.854a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 13.293V2.707L6.354 3.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 2.707v10.586l1.146-1.147a.5.5 0 0 1 .708.708l-2 2Z" />
+            </svg>
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-aspect-ratio hidden" viewBox="0 0 16 16">
+                <path
+                    d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z" />
+                <path
+                    d="M2 4.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H3v2.5a.5.5 0 0 1-1 0v-3zm12 7a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H13V8.5a.5.5 0 0 1 1 0v3z" />
+            </svg>
+
+        </button>
     </div>
 
     <div class="popup custom-body d-flex flex-column z-1 d-none" style="height: 300px; width: 300px;">
@@ -414,7 +438,13 @@
         integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
         crossorigin="anonymous"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script> -->
-
+    <style id="css">
+        #fileCanvas img,
+        #fileCanvas video {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </body>
 
 </html>

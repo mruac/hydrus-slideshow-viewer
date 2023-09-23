@@ -64,15 +64,17 @@ export function navFile(increment, requireReturn = false) {
         return g.clientFiles[y][x];
     } else {
         currentPos.y = y, currentPos.x = x;
-        ui.loadFileTags(g.clientFiles[currentPos.y][currentPos.x]);
-        ui.loadFileNotes(file.navFile(0, true));
-        ui.loadFileMetadata(file.navFile(0, true));
+        const file_metadata = file.navFile(0, true);
+        ui.loadFileTags(file_metadata);
+        ui.loadFileNotes(file_metadata);
+        ui.loadFileMetadata(file_metadata);
         ui.update_currentPos_display();
         ui.update_file_numbers();
+        const is_tall_and_fit_width = $('#window_fitToggle svg:not(.hidden)').hasClass('bi-arrows') &&
+            ((file_metadata.height * (window.innerWidth / file_metadata.width)) > window.innerHeight);
 
         console.debug(`loaded [${y}][${x}]`)
 
-        //TODO: CSS Transform with JS in px depending on viewport dims NOT %. For testing 999999px is used for now.
         const filePlaceholder = $('#filePlaceholder').children();
         //filePlaceholder[i] = find the one that is hidden
         let i = $('.visible').index();
@@ -98,6 +100,11 @@ export function navFile(increment, requireReturn = false) {
                 $(filePlaceholder[i]).children('audio, video').trigger('pause');
                 if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
                 $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
+                if (is_tall_and_fit_width) {
+                    $(filePlaceholder[i].children[0]).css('position', 'initial');
+                } else {
+                    $(filePlaceholder[i].children[0]).css('position', '');
+                }
                 $(filePlaceholder[i]).children('audio, video').trigger('play');
                 if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
                 $(filePlaceholder[i].children[0]).remove();
@@ -121,6 +128,11 @@ export function navFile(increment, requireReturn = false) {
                 $(filePlaceholder[i]).children('audio, video').trigger('pause');
                 if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
                 $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
+                if (is_tall_and_fit_width) {
+                    $(filePlaceholder[i].children[0]).css('position', 'initial');
+                } else {
+                    $(filePlaceholder[i].children[0]).css('position', '');
+                }
                 $(filePlaceholder[i]).children('audio, video').trigger('play');
                 if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
                 $(filePlaceholder[i].children[0]).remove();

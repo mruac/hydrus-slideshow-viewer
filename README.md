@@ -21,7 +21,8 @@ Hydrus Slideshow Viewer (HSV) is a slideshow web application for the [Hydrus Cli
     docker build -t hydrus-slideshow-viewer .
     docker run --name hydrus-slideshow-viewer -d -p {PORT_NUMBER}:3415 hydrus-slideshow-viewer
     ```
-- Works without the internet (provided you can still access the client API), as all information is processed client-side.
+- Works without the internet, all information is processed client-side.
+  - _NOTE: Offline capability requires HSV to be hosted on HTTPS or localhost, and the Client API must still be accessible (Over HTTPS or localhost)._
 - Shows multiple _named_ searches side by side, in slideshow format  
   ![](md_images/image-1.png)
 - Draggable/resizeable floating notes  
