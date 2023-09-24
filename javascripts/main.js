@@ -8,12 +8,11 @@ export let clientKey = '',
     client_named_Searches = [],
     menuTimeout, cursor_timeout,
     menuTimeout_delay = 2000,
-    isResizingLSidebar = false,
-    isResizingRSidebar = false,
     nav_increment = 1,
     panzoom_persist = false,
-    floating_notes_persist = false,
-    pointer_start = null;
+    floating_notes_persist = false;
+
+var touch_start;
 
 let is_fullscreenchange_event = true;
 
@@ -35,7 +34,7 @@ const panzoom_elem = panzoom(document.querySelector('#filePlaceholder'), {
 panzoom_elem.pause();
 
 const MAX_TIMER_INT = 2147483647;
-const SWIPE_THRESHOLD = 30;
+const SWIPE_THRESHOLD = 100;
 const sort_val_to_sort_int = {
     '0': [0, true],
     '1': [0, false],
@@ -312,115 +311,78 @@ $('#tagRepositoryList , #displayTagToggle').each(function (i, v) {
     });
 });
 
-$(document).on('pointerdown', function (e) {
-    if ($(e.target).is('#leftSidebarDraggable')) {
-        isResizingLSidebar = true;
-    } else if ($(e.target).is('#rightSidebarDraggable')) {
-        isResizingRSidebar = true;
-    }
-
+$('#fileCanvas').on('touchstart', function (e) {
+    //set starting pos of touch
     if ($(e.target).parents('#fileCanvas')[0]) {//swipe nav
-        pointer_start = e;
-    }
-
-
-});
-
-$(document).on('pointerup', function (e) {
-    if ((isResizingLSidebar || isResizingRSidebar)) { //if resizing sidebar
-
-        isResizingLSidebar = false;
-        isResizingRSidebar = false;
-
-        // const sidebarLheight = parseInt($('#leftSidebarMenu').css('height'));
-        const sidebarLwidth = parseInt($('.leftSidebar').css('width'));
-        const sidebarRwidth = parseInt($('.rightSidebar').css('width'));
-
-        // if (sidebarLheight > window.innerHeight - 15) {
-        //     $('#leftSidebarMenu').css('height', window.innerHeight - 15 + 'px');
-        // } else if (sidebarLheight < 15) {
-        //     $('#leftSidebarMenu').css('height', 15 + 'px');
-        // }
-
-        if (sidebarLwidth < 20) {
-            $('.leftSidebar').css('width', 20 + 'px');
-        } else if (sidebarLwidth > window.innerWidth - 20) {
-            $('.leftSidebar').css('width', window.innerWidth - 20 + 'px');
-        }
-
-        if (sidebarRwidth < 20) {
-            $('.rightSidebar').css('width', 20 + 'px');
-        } else if (sidebarRwidth > window.innerWidth - 20) {
-            $('.rightSidebar').css('width', window.innerWidth - 20 + 'px');
-        }
-
-    } else {
-        if ($(e.target).parents('#fileCanvas')[0] || $(e.target).is('#fileCanvas')) {
-            let pointer_end = e;
-            const directionX = pointer_end.screenX - pointer_start.screenX;
-            //don't nav while zooming, but allow toggleUI()
-            if (
-                (directionX < SWIPE_THRESHOLD && directionX > -(SWIPE_THRESHOLD) && panzoom_elem.isPaused())
-                || !panzoom_elem.isPaused()
-                ) {
-                toggleUI();
-            } else {
-                if (panzoom_elem.isPaused()) {
-                    if (directionX > SWIPE_THRESHOLD) { //+, swipe left
-                        file.navFile(-1);
-                    }
-                    else if (directionX < -(SWIPE_THRESHOLD)) { //-, swipe right
-                        file.navFile(1);
-                    }
-                }
-            }
-
-        }
+        touch_start = e;
     }
 });
 
 $('#fileCanvas').on('touchmove', function (e) {
-    e.preventDefault(); //allow swipenav by passing touch to pointer event
 });
 
-$(document).on('shown.bs.collapse', (e) => {
-    adjustDraggableHeight();
-});
+$('#fileCanvas').on('touchend', function (e) {
+    //swiping on fileCanvas
+    if ($(e.target).parents('#fileCanvas')[0] || $(e.target).is('#fileCanvas')) {
+        if (e.touches.length === 0) {
+            var pointer_end = e.changedTouches[0];
+        } else {
+            var pointer_end = e.touches[0];
+        }
+        const pointer_start = touch_start.touches[touch_start.touches.length - 1];
+        const directionX = pointer_end.clientX - pointer_start.clientX;
+        const directionY = pointer_end.clientY - pointer_start.clientY;
+        //show UI on tap (within threshold) or while panzooming
+        if (
+            (
+                (Math.abs(directionX) < SWIPE_THRESHOLD) &&
+                (Math.abs(directionY) < SWIPE_THRESHOLD) &&
+                panzoom_elem.isPaused()
+            )
+            || !panzoom_elem.isPaused()
+        ) {
+            toggleUI();
+        } else {
+            //filenav
+            if (
+                (Math.abs(directionY) < SWIPE_THRESHOLD) &&
+                panzoom_elem.isPaused() &&
+                touch_start.touches.length === 1
+            ) {
+                if ( //+, swipe left
+                    directionX < -(SWIPE_THRESHOLD) &&
+                    $('#filePlaceholder').scrollLeft() >= ($('#filePlaceholder')[0].scrollWidth - $('#filePlaceholder')[0].clientWidth)
+                ) {
+                    file.navFile(-1);
+                }
+                else if ( //-, swipe right
+                    directionX > SWIPE_THRESHOLD &&
+                    $('#filePlaceholder').scrollLeft() === 0
+                ) {
+                    file.navFile(1);
+                }
+            }
 
-$(document).on('hidden.bs.collapse', (e) => {
-    adjustDraggableHeight();
+            if (touch_start.touches.length === 2) {
+                if ( //+, swipe left
+                    directionX < -(SWIPE_THRESHOLD)
+                ) {
+                    file.navFile(-1);
+                }
+                else if ( //-, swipe right
+                    directionX > SWIPE_THRESHOLD
+                ) {
+                    file.navFile(1);
+                }
+            }
+
+        }
+
+    }
 });
 
 $('#rightSidebar').on('shown.bs.offcanvas', () => {
     bootstrap.ScrollSpy.getInstance($('#file_info_notefield')).refresh();
-});
-
-$(document).on('pointermove', function (e) {
-    if (!(isResizingLSidebar || isResizingRSidebar)) { //if not resizing sidebar
-        $('#fileCanvas').removeClass('nocursor');
-        clearTimeout(cursor_timeout);
-        cursor_timeout = setTimeout(() => {
-            if (!($('#leftSidebar, #rightSidebar').hasClass('show'))) {
-                $('#fileCanvas').addClass('nocursor')
-            }
-        }, menuTimeout_delay);
-        return;
-    } else {
-        if (isResizingLSidebar) {
-            if (e.clientX > (window.innerWidth * 0.2) &&
-                e.clientX < (window.innerWidth * 0.8)
-            ) {
-                $('.leftSidebar').css('width', e.clientX + 'px');
-            }
-        }
-        if (isResizingRSidebar) {
-            if (e.clientX > (window.innerWidth * 0.2) &&
-                e.clientX < (window.innerWidth * 0.8)
-            ) {
-                $('#rightSidebar').css('width', (window.innerWidth - e.clientX) + 'px');
-            }
-        }
-    }
 });
 
 $('.menu-submenu').on('click', function (e) {
@@ -542,7 +504,7 @@ function testClient() {
     }
 
     $('#clientStatus').text('Testing...').css('color', '');
-    
+
     $.ajaxSetup({
         headers: { 'Hydrus-Client-API-Access-Key': clientKey }
     });
@@ -592,7 +554,7 @@ function testClient() {
         var status = jqXHR.status === 0 ? 'No response / Blocked' : jqXHR.status;
         $('#clientStatus').text(`Fail (${status})`).css('color', 'red');
         clientKey = '';
-        clientURL = '';    
+        clientURL = '';
         localStorage.setItem('clientKey', clientKey);
         localStorage.setItem('clientURL', clientURL);
     });
@@ -729,14 +691,13 @@ $('#file_info_notefield').on('activate.bs.scrollspy', function (e) {
 });
 
 $('#fileCanvas').on('wheel', function (event) {
-    // console.log(event);
     if (event.ctrlKey) { event.preventDefault(); } //prevent ctrl zoom for panzoom shortcut
 
     if (panzoom_elem.isPaused()) {
         event.preventDefault(); //prevent default wheel event (scrolling)
 
         //file scroll (shift+wheel)
-        if ( event.shiftKey) {
+        if (event.shiftKey) {
             //it is scrollable, and shift key is held
             const fit_button = $('#window_fitToggle svg:not(.hidden)');
             if (fit_button.hasClass('bi-arrows')) {
@@ -777,11 +738,6 @@ export function error_textInput(input_elem, error_msg) {
 function resetZoom(instance) {
     instance.showRectangle($('#fileCanvas')[0].getBoundingClientRect());
     instance.moveTo(0, 0);
-}
-
-function adjustDraggableHeight() {
-    $('#leftSidebarDraggable').css('height', `${$('#leftSidebar .accordion').height()}px`)
-    $('#rightSidebarDraggable').css('height', `${$('#rightSidebar .accordion').height()}px`)
 }
 
 function toggleUI() {

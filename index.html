@@ -26,11 +26,6 @@
     <script src="./javascripts/file_functions.js" type="module"></script>
     <script src="./javascripts/tag_functions.js" type="module"></script>
     <script src="./javascripts/main.js" type="module"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-        crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="./stylesheets/style.css" />
     <style>
         .hidden {
@@ -56,8 +51,6 @@
 <body>
 
     <div class="offcanvas offcanvas-start leftSidebar" data-bs-scroll="true" data-bs-backdrop="false" id="leftSidebar">
-        <div id="leftSidebarDraggable" class="sidebar-draggable"></div>
-        <!--  -->
         <div class="accordion">
             <div class="accordion-item">
                 <h2 class="accordion-header d-flex justify-content-between" id="file_tag_label">
@@ -265,7 +258,6 @@
 
     <div class="offcanvas offcanvas-end rightSidebar" data-bs-backdrop="false" data-bs-scroll="true" tabindex="-1"
         id="rightSidebar" aria-labelledby="rightSidebarLabel">
-        <div id="rightSidebarDraggable" class="sidebar-draggable"></div>
         <div class="accordion">
             <div class="accordion-item">
                 <h2 class="accordion-header d-flex justify-content-between" id="file_info_label">
@@ -438,10 +430,11 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
         crossorigin="anonymous"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script> -->
     <style id="css">
         #fileCanvas img,
         #fileCanvas video {
