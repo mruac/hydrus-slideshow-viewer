@@ -1,20 +1,20 @@
 const CACHE_NAME = 'hsv_cache';
 const URLS_TO_CACHE = [
     './index.html',
-    './javascripts/jquery-3.7.1.js',
     './javascripts/anvaka_panzoom.js',
     './javascripts/ui_functions.js',
     './javascripts/file_functions.js',
     './javascripts/tag_functions.js',
     './javascripts/main.js',
     './stylesheets/style.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js'
+    './javascripts/jquery-3.7.1.min.js',
+    './stylesheets/bootstrap.min.css',
+    './javascripts/bootstrap.bundle.min.js'
 ];
 
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        fetch(event.request).catch(()=>{
+        fetch(event.request).catch(() => {
             caches.match(event.request).then((cachedResponse) => {
                 if (cachedResponse) {
                     return cachedResponse;
