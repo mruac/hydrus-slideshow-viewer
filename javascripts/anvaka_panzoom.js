@@ -1,3 +1,14 @@
+/**
+ * panzoom - Extensible, mobile friendly pan and zoom framework (supports DOM and SVG).
+ * https://github.com/anvaka/panzoom/blob/main/dist/panzoom.js
+ * Version 9.4.3 By anvaka and contributors.
+ * MIT License.
+ * This file may be modified. Please check the Github link above for the source.
+ * 
+ * mruac changelog:
+ * - added ability to restrict pan direction with panX and panY
+*/
+
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.panzoom = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 'use strict';
 /**
@@ -61,6 +72,7 @@ function createPanZoom(domElement, options) {
   // TODO: likely need to unite pinchSpeed with zoomSpeed
   var pinchSpeed = typeof options.pinchSpeed === 'number' ? options.pinchSpeed : 1;
   var bounds = options.bounds;
+  var boundsDisabledForZoom = typeof options.boundsDisabledForZoom === 'boolean' ? options.boundsDisabledForZoom : false
   var maxZoom = typeof options.maxZoom === 'number' ? options.maxZoom : Number.POSITIVE_INFINITY;
   var minZoom = typeof options.minZoom === 'number' ? options.minZoom : 0;
 
@@ -86,6 +98,10 @@ function createPanZoom(domElement, options) {
   var lastMouseDownTime = new Date();
   var lastSingleFingerOffset;
   var touchInProgress = false;
+  var panX = typeof options.panX === 'boolean' ? options.panX : true;
+  var panY = typeof options.panY === 'boolean' ? options.panY : true;
+
+  // console.log(`panx: ${panX}; pany ${panY}`);
 
   // We only need to fire panstart when actual move happens
   var panstartFired = false;
@@ -147,7 +163,10 @@ function createPanZoom(domElement, options) {
     setTransformOrigin: setTransformOrigin,
 
     getZoomSpeed: getZoomSpeed,
-    setZoomSpeed: setZoomSpeed
+    setZoomSpeed: setZoomSpeed,
+
+    setOptions: setOptions,
+    transformToScreen: transformToScreen
   };
 
   eventify(api);
@@ -273,6 +292,48 @@ function createPanZoom(domElement, options) {
 
   function setTransformOrigin(newTransformOrigin) {
     transformOrigin = parseTransformOrigin(newTransformOrigin);
+  }
+
+  function setOptions(opts){
+    // panController                      = opts.controller                 ? (opts.controller) : panController;
+    // filterKey                          = opts.filterKey                  ? (typeof opts.filterKey === 'function' ? opts.filterKey : noop) : filterKey;
+    // pinchSpeed                         = opts.pinchSpeed                 ? (typeof opts.pinchSpeed === 'number' ? opts.pinchSpeed : 1) : pinchSpeed;
+    // bounds                             = opts.bounds                     ? (opts.bounds) : bounds;
+    // boundsDisabledForZoom              = opts.boundsDisabledForZoom      ? (typeof opts.boundsDisabledForZoom === 'boolean' ? opts.boundsDisabledForZoom : false ): boundsDisabledForZoom;
+    // maxZoom                            = opts.maxZoom                    ? (typeof opts.maxZoom === 'number' ? opts.maxZoom : Number.POSITIVE_INFINITY) : maxZoom;
+    // minZoom                            = opts.minZoom                    ? (typeof opts.minZoom === 'number' ? opts.minZoom : 0) : minZoom;
+    // boundsPadding                      = opts.boundsPadding              ? (typeof opts.boundsPadding === 'number' ? opts.boundsPadding : 0.05) : boundsPadding;
+    // zoomDoubleClickSpeed               = opts.zoomDoubleClickSpeed       ? (typeof opts.zoomDoubleClickSpeed === 'number' ? opts.zoomDoubleClickSpeed : defaultDoubleTapZoomSpeed) : zoomDoubleClickSpeed;
+    // beforeWheel                        = opts.beforeWheel                ? (opts.beforeWheel || noop) : beforeWheel;
+    // beforeMouseDown                    = opts.beforeMouseDown            ? (opts.beforeMouseDown || noop) : beforeMouseDown;
+    // speed                              = opts.zoomSpeed                  ? (typeof opts.zoomSpeed === 'number' ? opts.zoomSpeed : defaultZoomSpeed) : speed;
+    // transformOrigin                    = opts.transformOrigin            ? (parseTransformOrigin(opts.transformOrigin)) : transformOrigin;
+    // textSelection                      = opts.enableTextSelection        ? (opts.enableTextSelection ? fakeTextSelectorInterceptor : domTextSelectionInterceptor) : textSelection;
+    // panX                               = opts.panX                       ? (typeof opts.panX === 'boolean' ? opts.panX : true) : panX;
+    // panY                               = opts.panY                       ? (typeof opts.panY === 'boolean' ? opts.panY : true) : panY;
+    // smoothScroll                       = opts.smoothScroll               ? (('smoothScroll' in opts && !opts.smoothScroll) ? rigidScroll() : kinetic(getPoint, scroll, opts.smoothScroll)) : smoothScroll;
+    // initialX                           = opts.initialX                   ? (typeof opts.initialX === 'number' ? opts.initialX : transform.x) : initialX;
+    // initialY                           = opts.initialY                   ? (typeof opts.initialY === 'number' ? opts.initialY : transform.y) : initialY;
+    // initialZoom                        = opts.initialZoom                ? (typeof opts.initialZoom === 'number' ? opts.initialZoom : transform.scale) : initialZoom;
+    // options.easing                     = opts.easing                     ? ((typeof opts.easing === 'function') ? opts.easing : animations[opts.easing]) : options.easing;
+    // options.step                       = opts.step                       ? (typeof opts.step === 'function' ? opts.step : noop) : options.step;
+    // options.done                       = opts.done                       ? (typeof opts.done === 'function' ? opts.done : noop) : options.done;
+    // scheduler                          = opts.scheduler                  ? (getScheduler(opts.scheduler) ):scheduler;
+    // options.duration                   = opts.duration                   ? (typeof opts.duration === 'number' ? opts.duration : 400) : options.duration;
+    // options.onTouch                    = opts.onTouch                    ? (opts.onTouch) : options.onTouch
+    // options.onDoubleClick              = opts.onDoubleClick              ? (opts.onDoubleClick) : options.onDoubleClick;
+    // options.onClick                    = opts.onClick                    ? (opts.onClick) : options.onClick;
+    // options.x                          = opts.x                          ? (opts.x) : options.x;
+    // options.y                          = opts.y                          ? (opts.y) : options.y;
+    // options.disableKeyboardInteraction = opts.disableKeyboardInteraction ? (opts.disableKeyboardInteraction) : options.disableKeyboardInteraction;
+    
+    panX = opts.panX ? opts.panX : panX;
+    panY = opts.panY ? opts.panY : panY;
+    maxZoom = opts.maxZoom ? (typeof opts.maxZoom === 'number' ? opts.maxZoom : Number.POSITIVE_INFINITY) : maxZoom;
+    minZoom = opts.minZoom ? (typeof opts.minZoom === 'number' ? opts.minZoom : 0) : minZoom;
+
+
+    return options;
   }
 
   function getZoomSpeed() {
@@ -421,7 +482,7 @@ function createPanZoom(domElement, options) {
       keepTransformInsideBounds();
     } else {
       var transformAdjusted = keepTransformInsideBounds();
-      if (!transformAdjusted) transform.scale *= ratio;
+      if (boundsDisabledForZoom || !transformAdjusted) transform.scale *= ratio
     }
 
     triggerEvent('zoom');
@@ -429,6 +490,13 @@ function createPanZoom(domElement, options) {
     makeDirty();
   }
 
+  /**
+   * Zooms element using absolute scale.
+   * 
+   * @param {number} clientX - X position of transformOrigin in container.
+   * @param {number} clientY - Y position of transformOrigin in container.
+   * @param {number} zoomLevel - Number to scale element to.
+   * */
   function zoomAbs(clientX, clientY, zoomLevel) {
     var ratio = zoomLevel / transform.scale;
     zoomByRatio(clientX, clientY, ratio);
@@ -665,8 +733,8 @@ function createPanZoom(domElement, options) {
       var offset = getOffsetXY(touch);
       var point = transformToScreen(offset.x, offset.y);
 
-      var dx = point.x - mouseX;
-      var dy = point.y - mouseY;
+      var dx = panX ? point.x - mouseX : 0;
+      var dy = panY ? point.y - mouseY : 0;
 
       if (dx !== 0 && dy !== 0) {
         triggerPanStart();
@@ -818,8 +886,8 @@ function createPanZoom(domElement, options) {
 
     var offset = getOffsetXY(e);
     var point = transformToScreen(offset.x, offset.y);
-    var dx = point.x - mouseX;
-    var dy = point.y - mouseY;
+    var dx = panX ? point.x - mouseX : 0;
+    var dy = panY ? point.y - mouseY : 0;
 
     mouseX = point.x;
     mouseY = point.y;

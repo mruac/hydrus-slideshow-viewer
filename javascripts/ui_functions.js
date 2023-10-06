@@ -19,7 +19,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
     }
 
     let i = 0;
-    function next() {
+    async function next() {
         if (getFileMetaData_job_id != job_id) { return; } //abort if there is another getFileMetaData going on. 
 
         if (i < searches.length) {
@@ -120,12 +120,10 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 console.debug({ 'fileMetadatas': result });
 
                 g.set_clientFiles(result);
-                for (let index = -(num_files_preload); index <= num_files_preload; index++) {
-                    const metadata = file.navFile(index, true);
-                    metadata['elem'] = loadFile(metadata);
-                }
-
-                tag.loadFiles();
+                preload_files();
+                setTimeout(() => {
+                    tag.loadFiles();
+                }, 10000);
             } catch (e) {
                 //make loading bar red
                 console.error(e);
@@ -139,6 +137,19 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
     next();
 
     return searches
+}
+
+function preload_files() {
+    for (let index = -(num_files_preload); index <= num_files_preload; index++) {
+        const metadata = file.navFile(index, true);
+        if (!metadata.hasOwnProperty('elem') && !metadata.hasOwnProperty('panzoom')) {
+            console.log('hash: ' + metadata.hash);
+            metadata['elem'] = loadFile(metadata);
+            metadata['panzoom'] = createPanzoom(metadata);
+            autofitpz(metadata, $('#filePlaceholder')[0]);
+        }
+    }
+    return;
 }
 
 export function loadFile(fileMetadata) {
@@ -175,6 +186,195 @@ export function loadFile(fileMetadata) {
     }
 }
 
+export function createPanzoom(metadata) {
+    const elem = metadata['elem'];
+    //makes the elem visible to the dom but invisible to the user, so that its dimensions can be measured.
+    // elem.css({ opacity: 1 });
+    $('#filePlaceholder').append(elem);
+    const pz = panzoom(elem[0], {
+        bounds: true,
+        panX: false,
+        panY: false,
+        transformOrigin: { x: 0.5, y: 0.5 },
+    });
+    pz.pause(); //prevent user pan/zoom
+    elem.detach();
+    return pz;
+}
+
+//zoom to fit
+export async function autofitpz(obj, container, fit_type = 'auto') {
+    const pz = obj.panzoom;
+
+    if (['P', 'AUDIO', 'VIDEO'].indexOf(obj['elem'][0].nodeName) > -1) {
+        //just only center the element
+        centerpz(obj, container);
+        return;
+    }
+
+    const el_dims = { width: 0, height: 0 };
+    if (obj.hasOwnProperty('hash')) { //if hydrus metadata
+        el_dims.width = obj.width;
+        el_dims.height = obj.height;
+        // console.log('autofitting hash: ' + obj.hash);
+    }
+    // else if (obj instanceof HTMLElement) { //if non-hydrus file, e.g. no file <p>
+    //     el_dims.width = obj.clientWidth;
+    //     el_dims.height = obj.clientHeight;
+    //     // console.log('autofitting el: ' + obj.outerHTML);
+    // } else {
+    //     console.error('Could not identify file / element dimensions. Something might go wrong!');
+    // }
+    const container_dims = { width: container.clientWidth, height: container.clientHeight };
+    // if(container_dims.width != 1023 || container_dims.height != 680) {console.error('dims mismatch! ' + JSON.stringify(container_dims));}
+
+    const tf = pz.getTransform();
+    const fit_to_width = container_dims.width / el_dims.width;
+    const fit_to_height = container_dims.height / el_dims.height;
+    // console.log(JSON.stringify({ container: container_dims, el_dims: el_dims, calc_fit: {width: fit_to_width, height: fit_to_height} }));
+    var scale = 0;
+
+    switch (fit_type) {
+        case 'width':
+            scale = fit_to_width; //fit to width
+            break;
+        case 'height':
+            scale = fit_to_height; //fit to height
+            break;
+        case 'auto': //fit to container
+        default:
+            //if fit to width, will the el's height exceed the container height?
+            if ((el_dims.height * fit_to_width) > container_dims.height) {
+                scale = fit_to_height; //fit to height
+            } else {
+                scale = fit_to_width; //fit to width
+            }
+            break;
+    }
+    // console.log(`scale: ${scale}; hash: ${obj.hash}`);
+    //error here if scale is Infinity
+
+    // pz.on('zoom', ()=>{
+    //     pz.off();
+    //         console.log(pz.getTransform());
+    //     centerpz(obj, container);
+    //   });              
+
+    // console.log(pz.getTransform());
+    // waitForElm(obj['elem'][0]).then(() => {
+    //     pz.zoomAbs(tf.x, tf.y, scale);
+    //     obj['elem'].detach();
+    //     centerpz(obj, container);
+    // });
+    console.log('a');
+    $(container).append(obj['elem']);
+    setTimeout(() => {
+        console.log('b');
+        pz.zoomAbs(tf.x, tf.y, scale);
+        obj['elem'].detach();
+        setTimeout(() => {
+            console.log('c');
+            centerpz(obj, container);
+            setTimeout(() => {
+                console.log('d');
+            }, 1000);
+        }, 1000);
+    }, 1000);
+
+
+
+    // });
+    // obj['elem'].detach();;
+
+
+    // console.log(pz.getTransform());
+    return;
+
+    /* 
+    $('#filePlaceholder').append(obj['elem']);
+    setTimeout(() => {
+        pz.zoomAbs(tf.x, tf.y, scale);
+        obj['elem'].detach();
+        centerpz(obj, container);
+    }, 100);
+
+        $('#filePlaceholder').append(obj['elem'])
+    await waitForElm(obj['elem'][0]);
+        pz.zoomAbs(tf.x, tf.y, scale);
+
+    */
+}
+
+//center panzoom_elem
+//requires el to be visible / loaded into dom
+export async function centerpz(obj, container) {
+    console.log('e');
+    const pz = obj.panzoom;
+    $(container).append(obj.elem);
+    setTimeout(() => {
+        const el_dims = { width: 0, height: 0 };
+        if (['P', 'AUDIO', 'VIDEO'].indexOf(obj['elem'][0].nodeName) > -1) { //if non-hydrus file, e.g. no file <p>
+            el_dims.width = obj['elem'].width();
+            el_dims.height = obj['elem'].height();
+            // console.log('centerpz hash: ' + obj.hash);
+        } else if (obj.hasOwnProperty('hash')) {//if hydrus metadata
+            el_dims.width = obj.width;
+            el_dims.height = obj.height;
+            // console.log('centerpz el: ' + obj.outerHTML);
+        } else {
+            console.error('Could not identify file / element dimensions. Something might go wrong!', obj);
+        }
+        console.log(obj.file_id + ' ' + JSON.stringify(el_dims), obj);
+        // if (obj.hasOwnProperty('hash')) { //if hydrus metadata
+        //     el_dims.width = obj.width;
+        //     el_dims.height = obj.height;
+        //     // console.log('centerpz hash: ' + obj.hash);
+        // } else if (obj instanceof HTMLElement) { //if non-hydrus file, e.g. no file <p>
+        //     el_dims.width = obj.clientWidth;
+        //     el_dims.height = obj.clientHeight;
+        //     // console.log('centerpz el: ' + obj.outerHTML);
+        // } else {
+        //     console.error('Could not identify file / element dimensions. Something might go wrong!');
+        // }
+        const container_dims = { width: container.clientWidth, height: container.clientHeight };
+        // if(container_dims.width != 1023 || container_dims.height != 680) {console.error('dims mismatch! ' + JSON.stringify(container_dims));}
+        // let el_rect = el.getBoundingClientRect();
+        const tf = pz.getTransform();
+        const pan = {
+            x: (container_dims.width / 2) - ((el_dims.width * tf.scale) / 2),
+            y: (container_dims.height / 2) - ((el_dims.height * tf.scale) / 2)
+        };
+        //error here if pan.x || pan.y === NaN;
+        setTimeout(() => {
+            if (obj['elem'][0].nodeName != 'VIDEO') { //FIXME: video offsets for some reason? this has been excepted as video is already full width.
+                pz.moveTo(pan.x, pan.y);
+            }
+            obj.elem.detach();
+
+        }, 1000);
+
+    }, 1000);
+    return;
+}
+
+function waitForElm(el) {
+    return new Promise(resolve => {
+        if (document.contains(el)) { return resolve(el); }
+
+        const observer = new MutationObserver(() => {
+            if (document.contains(el)) {
+                observer.disconnect();
+                resolve(el);
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+}
+
 export function update_currentPos_display() {
     $('#file_length').text(g.clientFiles[file.currentPos.y].length);
     $('#search_no').text(g.client_named_Searches[file.currentPos.y]);
@@ -189,7 +389,7 @@ export function update_file_numbers() {
 }
 
 export function loadFileTags(metadata) {
-    if(metadata.mime === 'no_file'){
+    if (metadata.mime === 'no_file') {
         $('#committags').hide();
         $('#taglist').val('');
         $('#taglist').attr('readonly', '');
@@ -243,8 +443,8 @@ export function loadFileNotes(metadata) {
     const notes = metadata?.notes;
     const note_button_options = $('#file_info_notes .dropdown-menu');
     const note_field = $('#file_info_notefield');
-    
-    if(metadata.mime === 'no_file'){
+
+    if (metadata.mime === 'no_file') {
         $('.popup').addClass('d-none');
         $('.popup-header span').text('');
         $('.popup-content p').text('');
@@ -252,7 +452,8 @@ export function loadFileNotes(metadata) {
         note_field.find('div').remove();
         $('.popup select').children('option').remove();
         $('#file_info_notes span').text('No notes!');
-        return;}
+        return;
+    }
 
     $('.popup').addClass('d-none');
     $('.popup-header span').text('');

@@ -17,7 +17,8 @@ export function createElem(type, content) {
             return $('<img/>', {
                 'src': url,
             });
-        case 'video': case 'audio':
+        case 'video':
+        case 'audio':
             let elem = $(`<${type}/>`, {
                 'controls': '',
                 'loop': '',
@@ -85,14 +86,15 @@ export function navFile(increment, requireReturn = false) {
             //check if ['elem'] exists, if not, preload around it
 
             //preload next batch of  files if there is navFile(25, true)['elem'] === undefined
-            if ((navFile(num_files_preload_batch, true)['elem'] === undefined)
-            ) {
-                for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
-                    const metadata = file.navFile((index), true);
-                    metadata['elem'] = ui.loadFile(metadata)
-                }
-                console.debug(`preloaded next ${num_files_preload_batch} files`)
-            }
+            // if ((navFile(num_files_preload_batch, true)['elem'] === undefined)
+            // ) {
+            //     for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
+            //         const metadata = file.navFile((index), true);
+            //         metadata['elem'] = ui.loadFile(metadata);
+            //         createPanzoom(metadata);
+            //     }
+            //     console.debug(`preloaded next ${num_files_preload_batch} files`)
+            // }
 
             //hide filePlaceholder[i], show next file in the next elem, load the file after in the elem after.
             if (increment === 1) {
@@ -100,11 +102,12 @@ export function navFile(increment, requireReturn = false) {
                 $(filePlaceholder[i]).children('audio, video').trigger('pause');
                 if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
                 $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
-                if (is_tall_and_fit_width) {
-                    $(filePlaceholder[i].children[0]).css('position', 'initial');
-                } else {
-                    $(filePlaceholder[i].children[0]).css('position', '');
-                }
+                //reset fit to window/width/height
+                // if (is_tall_and_fit_width) {
+                //     $(filePlaceholder[i].children[0]).css('position', 'initial');
+                // } else {
+                //     $(filePlaceholder[i].children[0]).css('position', '');
+                // }
                 $(filePlaceholder[i]).children('audio, video').trigger('play');
                 if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
                 $(filePlaceholder[i].children[0]).remove();
@@ -114,25 +117,26 @@ export function navFile(increment, requireReturn = false) {
             }
 
         } else if (increment < 0) {//-
-            if ((navFile(-(num_files_preload_batch), true)['elem'] === undefined)
-            ) {
-                for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
-                    const metadata = file.navFile(-(index), true);
-                    metadata['elem'] = ui.loadFile(metadata)
-                }
-                console.debug(`preloaded next ${num_files_preload_batch} files`)
-            }
+            // if ((navFile(-(num_files_preload_batch), true)['elem'] === undefined)
+            // ) {
+            //     for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
+            //         const metadata = file.navFile(-(index), true);
+            //         metadata['elem'] = ui.loadFile(metadata);
+            //         createPanzoom(metadata);
+            //     }
+            //     console.debug(`preloaded next ${num_files_preload_batch} files`)
+            // }
 
             if (increment === -1) {
                 $(filePlaceholder[i]).removeClass('visible').addClass('hidden');
                 $(filePlaceholder[i]).children('audio, video').trigger('pause');
                 if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
                 $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
-                if (is_tall_and_fit_width) {
-                    $(filePlaceholder[i].children[0]).css('position', 'initial');
-                } else {
-                    $(filePlaceholder[i].children[0]).css('position', '');
-                }
+                // if (is_tall_and_fit_width) {
+                //     $(filePlaceholder[i].children[0]).css('position', 'initial');
+                // } else {
+                //     $(filePlaceholder[i].children[0]).css('position', '');
+                // }
                 $(filePlaceholder[i]).children('audio, video').trigger('play');
                 if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
                 $(filePlaceholder[i].children[0]).remove();
@@ -151,9 +155,10 @@ export function navRandomFile() {
 
     for (let index = -(ui.num_files_preload); index <= ui.num_files_preload; index++) {
         const metadata = file.navFile(index, true);
-        if (metadata['elem'] === undefined) {
-            metadata['elem'] = ui.loadFile(metadata)
-        }
+        // if (metadata['elem'] === undefined) {
+        //     metadata['elem'] = ui.loadFile(metadata);
+        //     createPanzoom(metadata);
+        // }
     }
     console.debug(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
 
@@ -167,9 +172,10 @@ export function jumpToFile(search_number = 0, file_number = 0) {
     currentPos.y = search_number;
     for (let index = -(ui.num_files_preload); index <= ui.num_files_preload; index++) {
         const metadata = file.navFile(index, true);
-        if (metadata['elem'] === undefined) {
-            metadata['elem'] = ui.loadFile(metadata)
-        }
+        // if (metadata['elem'] === undefined) {
+        //     metadata['elem'] = ui.loadFile(metadata);
+        //     createPanzoom(metadata);
+        // }
     }
     console.debug(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
 

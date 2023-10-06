@@ -19,19 +19,30 @@ let is_fullscreenchange_event = true;
 const offcanvasElementList = document.querySelectorAll('.offcanvas');
 const offcanvasList = [...offcanvasElementList].map(offcanvasEl => new bootstrap.Offcanvas(offcanvasEl));
 
-const panzoom_elem = panzoom(document.querySelector('#filePlaceholder'), {
-    bounds: true,
-    boundsPadding: 0.4,
-    maxZoom: 200,
-    minZoom: 0.1,
-    zoomDoubleClickSpeed: 1,
-    filterKey: function (/* e, dx, dy, dz */) {
-        // don't let panzoom handle this event:
-        return true;
-    }
+// this panzooms the container, not the image
+// const panzoom_elem = panzoom(document.querySelectorAll('#filePlaceholder'), {
+//     bounds: true,
+//     boundsPadding: 0.4,
+//     maxZoom: 200,
+//     minZoom: 0.1,
+//autocenter: true
+//     zoomDoubleClickSpeed: 1,
+//     filterKey: function (/* e, dx, dy, dz */) {
+//         // don't let panzoom handle this event:
+//         return true;
+//     }
+// });
+// panzoom_elem.pause();
 
-});
-panzoom_elem.pause();
+//recenter to fit window
+//panzoom_elem.showRectangle(document.querySelector('#fileCanvas').getBoundingClientRect());
+// panzoom_elem.moveBy(0,0); //required to set the css transforms, as the last command only sets it internally.
+
+/* 
+matrix(scaleX(), skewY(), skewX(), scaleY(), translateX(), translateY())
+
+
+*/
 
 const MAX_TIMER_INT = 2147483647;
 const SWIPE_THRESHOLD = 100;
@@ -191,7 +202,7 @@ $(document).on('keydown', (e) => {
     if (e.repeat) return;
 
     if (e.key === 'Control') {
-        panzoom_elem.resume();
+        file.navFile(0, true)['panzoom'].resume();
         $('[for=\'zoomToggle\']').addClass('active');
 
     }
@@ -200,11 +211,11 @@ $(document).on('keydown', (e) => {
 $(document).on('keyup', (e) => {
 
     if (e.key === 'Control') {
-        panzoom_elem.pause();
+        file.navFile(0, true)['panzoom'].pause();
         $('[for=\'zoomToggle\']').removeClass('active');
 
         if (!panzoom_persist) {
-            resetZoom(panzoom_elem);
+            resetZoom(file.navFile(0, true)['panzoom']);
             setTimeout(() => {
                 $('#filePlaceholder').removeAttr('style');
             }, 50);
@@ -224,11 +235,11 @@ $('.popup select').on('change', function (e) {
 
 $('#zoomToggle').on('change', (e) => {
     if ($(e.target).is(':checked')) {
-        panzoom_elem.resume();
+        file.navFile(0, true)['panzoom'].resume();
     } else {
-        panzoom_elem.pause();
+        file.navFile(0, true)['panzoom'].pause();
         if (!panzoom_persist) {
-            resetZoom(panzoom_elem);
+            resetZoom(file.navFile(0, true)['panzoom']);
             setTimeout(() => {
                 $('#filePlaceholder').removeAttr('style');
             }, 50);
@@ -236,7 +247,7 @@ $('#zoomToggle').on('change', (e) => {
     }
 });
 
-$('#window_fitToggle').on('click', () => {
+$('#window_fitToggle').on('click', () => {return;
     const el = $('#window_fitToggle');
     const el_visible = el.find('svg:not(.hidden)');
     const file_metadata = file.navFile(0, true);
@@ -311,6 +322,61 @@ $('#tagRepositoryList , #displayTagToggle').each(function (i, v) {
     });
 });
 
+var pointer_start = null;
+
+$('#fileCanvas').on('mousedown', function (e) {
+    pointer_start = e;
+});
+
+var prev_pointer;
+$('#fileCanvas').on('mousemove', function (e) {
+    if (prev_pointer === null) { return; }
+    if (pointer_start != null) {
+        const aaa = $('#filePlaceholder')[0].scrollWidth / $('#filePlaceholder')[0].clientWidth;
+        const directionX = aaa * (e.clientX - prev_pointer.clientX);
+        const directionY = aaa * (e.clientY - prev_pointer.clientY);
+        $('#filePlaceholder')[0].scrollBy(-directionX, -directionY);
+    }
+    prev_pointer = e;
+});
+
+$('#fileCanvas').on('mouseup ', function (e) {
+    let pointer_end = e;
+    const directionX = pointer_end.clientX - pointer_start.clientX;
+    const directionY = pointer_end.clientY - pointer_start.clientY;
+    pointer_start = null;
+
+    //don't nav while zooming, but allow toggleUI()
+    if (
+        (
+            (Math.abs(directionX) < SWIPE_THRESHOLD) &&
+            (Math.abs(directionY) < SWIPE_THRESHOLD) &&
+            file.navFile(0, true)['panzoom'].isPaused()
+        )
+        || !file.navFile(0, true)['panzoom'].isPaused()
+    ) {
+        toggleUI();
+    } else {
+        if (
+            (Math.abs(directionY) < SWIPE_THRESHOLD) &&
+            file.navFile(0, true)['panzoom'].isPaused()
+        ) {
+            if ( //+, swipe left
+                directionX < -(SWIPE_THRESHOLD) &&
+                Math.round($('#filePlaceholder').scrollLeft()) >= ($('#filePlaceholder')[0].scrollWidth - $('#filePlaceholder')[0].clientWidth)
+            ) {
+                file.navFile(-1);
+            }
+            else if ( //-, swipe right
+                directionX > SWIPE_THRESHOLD &&
+                $('#filePlaceholder').scrollLeft() === 0
+            ) {
+                file.navFile(1);
+            }
+        }
+    }
+});
+
 $('#fileCanvas').on('touchstart', function (e) {
     //set starting pos of touch
     if ($(e.target).parents('#fileCanvas')[0]) {//swipe nav
@@ -325,33 +391,33 @@ $('#fileCanvas').on('touchend', function (e) {
     //swiping on fileCanvas
     if ($(e.target).parents('#fileCanvas')[0] || $(e.target).is('#fileCanvas')) {
         if (e.touches.length === 0) {
-            var pointer_end = e.changedTouches[0];
+            var touch_end = e.changedTouches[0];
         } else {
-            var pointer_end = e.touches[0];
+            var touch_end = e.touches[0];
         }
-        const pointer_start = touch_start.touches[touch_start.touches.length - 1];
-        const directionX = pointer_end.clientX - pointer_start.clientX;
-        const directionY = pointer_end.clientY - pointer_start.clientY;
+        const pointer_start_last = touch_start.touches[touch_start.touches.length - 1];
+        const directionX = touch_end.clientX - pointer_start_last.clientX;
+        const directionY = touch_end.clientY - pointer_start_last.clientY;
         //show UI on tap (within threshold) or while panzooming
         if (
             (
                 (Math.abs(directionX) < SWIPE_THRESHOLD) &&
                 (Math.abs(directionY) < SWIPE_THRESHOLD) &&
-                panzoom_elem.isPaused()
+                file.navFile(0, true)['panzoom'].isPaused()
             )
-            || !panzoom_elem.isPaused()
+            || !file.navFile(0, true)['panzoom'].isPaused()
         ) {
             toggleUI();
         } else {
             //filenav
             if (
                 (Math.abs(directionY) < SWIPE_THRESHOLD) &&
-                panzoom_elem.isPaused() &&
+                file.navFile(0, true)['panzoom'].isPaused() &&
                 touch_start.touches.length === 1
             ) {
                 if ( //+, swipe left
                     directionX < -(SWIPE_THRESHOLD) &&
-                    $('#filePlaceholder').scrollLeft() >= ($('#filePlaceholder')[0].scrollWidth - $('#filePlaceholder')[0].clientWidth)
+                    Math.round($('#filePlaceholder').scrollLeft()) >= ($('#filePlaceholder')[0].scrollWidth - $('#filePlaceholder')[0].clientWidth)
                 ) {
                     file.navFile(-1);
                 }
@@ -693,7 +759,7 @@ $('#file_info_notefield').on('activate.bs.scrollspy', function (e) {
 $('#fileCanvas').on('wheel', function (event) {
     if (event.ctrlKey) { event.preventDefault(); } //prevent ctrl zoom for panzoom shortcut
 
-    if (panzoom_elem.isPaused()) {
+    if (file.navFile(0, true)['panzoom'].isPaused()) {
         event.preventDefault(); //prevent default wheel event (scrolling)
 
         //file scroll (shift+wheel)
@@ -736,8 +802,9 @@ export function error_textInput(input_elem, error_msg) {
 }
 
 function resetZoom(instance) {
+    //recenter to fit window
     instance.showRectangle($('#fileCanvas')[0].getBoundingClientRect());
-    instance.moveTo(0, 0);
+    instance.moveTo(0, 0); //required to set the css transforms, as the last command only sets it internally.
 }
 
 function toggleUI() {
