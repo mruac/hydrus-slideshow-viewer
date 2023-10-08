@@ -331,7 +331,8 @@ $('#fileCanvas').on('mousedown', function (e) {
 var prev_pointer;
 $('#fileCanvas').on('mousemove', function (e) {
     if (prev_pointer === null) { return; }
-    if (pointer_start != null) {
+    if (false/* pointer_start != null */) {
+        //file scroll
         const aaa = $('#filePlaceholder')[0].scrollWidth / $('#filePlaceholder')[0].clientWidth;
         const directionX = aaa * (e.clientX - prev_pointer.clientX);
         const directionY = aaa * (e.clientY - prev_pointer.clientY);
@@ -763,16 +764,16 @@ $('#fileCanvas').on('wheel', function (event) {
         event.preventDefault(); //prevent default wheel event (scrolling)
 
         //file scroll (shift+wheel)
-        if (event.shiftKey) {
-            //it is scrollable, and shift key is held
-            const fit_button = $('#window_fitToggle svg:not(.hidden)');
-            if (fit_button.hasClass('bi-arrows')) {
-                //if fit to width, do vertical scroll
-                $('#filePlaceholder').scrollTop($('#filePlaceholder').scrollTop() + event.originalEvent.deltaY);
-            } else if (fit_button.hasClass('bi-arrows-vertical')) {
-                //if fit to height, do horizontal scroll
-                $('#filePlaceholder').scrollLeft($('#filePlaceholder').scrollLeft() + event.originalEvent.deltaY);
-            }
+        if (false/* event.shiftKey */) {
+            // //it is scrollable, and shift key is held
+            // const fit_button = $('#window_fitToggle svg:not(.hidden)');
+            // if (fit_button.hasClass('bi-arrows')) {
+            //     //if fit to width, do vertical scroll
+            //     $('#filePlaceholder').scrollTop($('#filePlaceholder').scrollTop() + event.originalEvent.deltaY);
+            // } else if (fit_button.hasClass('bi-arrows-vertical')) {
+            //     //if fit to height, do horizontal scroll
+            //     $('#filePlaceholder').scrollLeft($('#filePlaceholder').scrollLeft() + event.originalEvent.deltaY);
+            // }
         } else {
             //file nav
             if (event.originalEvent.deltaY < 0) {//scroll up
@@ -806,6 +807,10 @@ function resetZoom(instance) {
     instance.showRectangle($('#fileCanvas')[0].getBoundingClientRect());
     instance.moveTo(0, 0); //required to set the css transforms, as the last command only sets it internally.
 }
+
+$(window).on('resize', ()=>{
+   //TODO: refit 
+});
 
 function toggleUI() {
     clearTimeout(menuTimeout);

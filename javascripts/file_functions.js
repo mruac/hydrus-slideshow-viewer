@@ -9,14 +9,14 @@ export var currentPos = { 'x': 0, 'y': 0 };
 
 export function createElem(type, content) {
     const url = `${g.clientURL}/get_files/file?Hydrus-Client-API-Access-Key=${g.clientKey}&file_id=${content['file_id']}`;
+    const container_div = $('<div/>', { class: 'container-div' });
     switch (type) {
         case 'p':
-            return $('<p/>', {
-            }).text(content);
+            container_div.append($('<p/>', {}).text(content));
+            break;
         case 'img':
-            return $('<img/>', {
-                'src': url,
-            });
+            container_div.append($('<img/>', { 'src': url, }));
+            break;
         case 'video':
         case 'audio':
             let elem = $(`<${type}/>`, {
@@ -25,8 +25,10 @@ export function createElem(type, content) {
                 'src': url
             });
             elem[0].volume = 0.5;
-            return elem;
+            container_div.append(elem);
+            break;
     }
+    return container_div;
 }
 
 export function navFile(increment, requireReturn = false) {
@@ -83,6 +85,7 @@ export function navFile(increment, requireReturn = false) {
         const num_files_preload_batch = Math.floor(ui.num_files_preload / 2);
 
         if (increment > 0) {//+
+            //TODO: put preload files back in: navFile navRandomFile jumpToFile
             //check if ['elem'] exists, if not, preload around it
 
             //preload next batch of  files if there is navFile(25, true)['elem'] === undefined

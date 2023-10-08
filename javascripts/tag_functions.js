@@ -60,6 +60,8 @@ export function loadFiles() {
 
     $('#progress_bar').hide();
 
+    console.log(g.clientFiles);
+
     ui.loadFileTags(file.navFile(0, true));
     ui.loadFileNotes(file.navFile(0, true));
     ui.loadFileMetadata(file.navFile(0, true));
@@ -72,20 +74,24 @@ export function loadFiles() {
     if (numberOfFiles < 3) {
         for (let index = 0; index < numberOfFiles; index++) {
             const elem = $('<div/>', { 'id': `filePlaceholder${index}` });
-            elem.append(file.navFile(index, true)['elem']);
+            const obj_file = file.navFile(index, true);
+            elem.append(obj_file['elem']);
             if (index === 0) {
                 elem.addClass('visible');
                 elem.children('audio, video').trigger('play');
+                obj_file.panzoom.moveBy(0, 0);
             } else { elem.addClass('hidden'); }
             file_placeholder.append(elem);
         }
     } else {
         for (let index = 0; index < 3; index++) {
             const elem = $('<div/>', { 'id': `filePlaceholder${index}` });
-            elem.append(file.navFile(index - 1, true)['elem']);
+            const obj_file = file.navFile(index - 1, true);
+            elem.append(obj_file['elem']);
             if (index - 1 === 0) {
                 elem.addClass('visible');
                 elem.children('audio, video').trigger('play');
+                obj_file.panzoom.moveBy(0, 0);
             } else { elem.addClass('hidden'); }
             file_placeholder.append(elem);
         }

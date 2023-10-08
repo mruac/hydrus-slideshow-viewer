@@ -101,7 +101,7 @@ function createPanZoom(domElement, options) {
   var panX = typeof options.panX === 'boolean' ? options.panX : true;
   var panY = typeof options.panY === 'boolean' ? options.panY : true;
 
-  // console.log(`panx: ${panX}; pany ${panY}`);
+  // //console.log(`panx: ${panX}; pany ${panY}`);
 
   // We only need to fire panstart when actual move happens
   var panstartFired = false;
@@ -166,6 +166,7 @@ function createPanZoom(domElement, options) {
     setZoomSpeed: setZoomSpeed,
 
     setOptions: setOptions,
+    applyTransform: applyTransform,
     transformToScreen: transformToScreen
   };
 
@@ -298,10 +299,10 @@ function createPanZoom(domElement, options) {
     // panController                      = opts.controller                 ? (opts.controller) : panController;
     // filterKey                          = opts.filterKey                  ? (typeof opts.filterKey === 'function' ? opts.filterKey : noop) : filterKey;
     // pinchSpeed                         = opts.pinchSpeed                 ? (typeof opts.pinchSpeed === 'number' ? opts.pinchSpeed : 1) : pinchSpeed;
-    // bounds                             = opts.bounds                     ? (opts.bounds) : bounds;
+    bounds                             = validateBounds(opts.bounds)                     ? opts.bounds : bounds;
     // boundsDisabledForZoom              = opts.boundsDisabledForZoom      ? (typeof opts.boundsDisabledForZoom === 'boolean' ? opts.boundsDisabledForZoom : false ): boundsDisabledForZoom;
-    // maxZoom                            = opts.maxZoom                    ? (typeof opts.maxZoom === 'number' ? opts.maxZoom : Number.POSITIVE_INFINITY) : maxZoom;
-    // minZoom                            = opts.minZoom                    ? (typeof opts.minZoom === 'number' ? opts.minZoom : 0) : minZoom;
+    maxZoom                            = (typeof opts.maxZoom === 'number') ? opts.maxZoom : maxZoom;
+    minZoom                            = (typeof opts.minZoom === 'number') ? opts.minZoom : minZoom;
     // boundsPadding                      = opts.boundsPadding              ? (typeof opts.boundsPadding === 'number' ? opts.boundsPadding : 0.05) : boundsPadding;
     // zoomDoubleClickSpeed               = opts.zoomDoubleClickSpeed       ? (typeof opts.zoomDoubleClickSpeed === 'number' ? opts.zoomDoubleClickSpeed : defaultDoubleTapZoomSpeed) : zoomDoubleClickSpeed;
     // beforeWheel                        = opts.beforeWheel                ? (opts.beforeWheel || noop) : beforeWheel;
@@ -309,8 +310,8 @@ function createPanZoom(domElement, options) {
     // speed                              = opts.zoomSpeed                  ? (typeof opts.zoomSpeed === 'number' ? opts.zoomSpeed : defaultZoomSpeed) : speed;
     // transformOrigin                    = opts.transformOrigin            ? (parseTransformOrigin(opts.transformOrigin)) : transformOrigin;
     // textSelection                      = opts.enableTextSelection        ? (opts.enableTextSelection ? fakeTextSelectorInterceptor : domTextSelectionInterceptor) : textSelection;
-    // panX                               = opts.panX                       ? (typeof opts.panX === 'boolean' ? opts.panX : true) : panX;
-    // panY                               = opts.panY                       ? (typeof opts.panY === 'boolean' ? opts.panY : true) : panY;
+    panX                               = (typeof opts.panX === 'boolean') ? opts.panX : panX;
+    panY                               = (typeof opts.panY === 'boolean') ? opts.panY : panY;
     // smoothScroll                       = opts.smoothScroll               ? (('smoothScroll' in opts && !opts.smoothScroll) ? rigidScroll() : kinetic(getPoint, scroll, opts.smoothScroll)) : smoothScroll;
     // initialX                           = opts.initialX                   ? (typeof opts.initialX === 'number' ? opts.initialX : transform.x) : initialX;
     // initialY                           = opts.initialY                   ? (typeof opts.initialY === 'number' ? opts.initialY : transform.y) : initialY;
@@ -327,11 +328,11 @@ function createPanZoom(domElement, options) {
     // options.y                          = opts.y                          ? (opts.y) : options.y;
     // options.disableKeyboardInteraction = opts.disableKeyboardInteraction ? (opts.disableKeyboardInteraction) : options.disableKeyboardInteraction;
     
-    panX = opts.panX ? opts.panX : panX;
-    panY = opts.panY ? opts.panY : panY;
-    maxZoom = opts.maxZoom ? (typeof opts.maxZoom === 'number' ? opts.maxZoom : Number.POSITIVE_INFINITY) : maxZoom;
-    minZoom = opts.minZoom ? (typeof opts.minZoom === 'number' ? opts.minZoom : 0) : minZoom;
-
+    transform = opts.transform ? {
+      x: opts.transform.x ? opts.transform.x : transform.x,
+      y: opts.transform.y ? opts.transform.y : transform.y,
+      scale: opts.transform.scale ? opts.transform.scale : transform.scale,
+    } : transform;
 
     return options;
   }
@@ -359,6 +360,8 @@ function createPanZoom(domElement, options) {
     transform.y = y;
 
     keepTransformInsideBounds();
+    //console.log(x,y);
+    //console.log(transform);
 
     triggerEvent('pan');
     makeDirty();
@@ -484,7 +487,7 @@ function createPanZoom(domElement, options) {
       var transformAdjusted = keepTransformInsideBounds();
       if (boundsDisabledForZoom || !transformAdjusted) transform.scale *= ratio
     }
-
+    //console.log(transform);
     triggerEvent('zoom');
 
     makeDirty();
@@ -1043,7 +1046,7 @@ function parseTransformOrigin(options) {
 }
 
 function failTransformOrigin(options) {
-  console.error(options);
+  //console.error(options);
   throw new Error(
     [
       'Cannot parse transform origin.',
@@ -1059,7 +1062,7 @@ function noop() { }
 
 function validateBounds(bounds) {
   var boundsType = typeof bounds;
-  if (boundsType === 'undefined' || boundsType === 'boolean') return; // this is okay
+  if (boundsType === 'undefined' || boundsType === 'boolean') return true; // this is okay
   // otherwise need to be more thorough:
   var validBounds =
     isNumber(bounds.left) &&
@@ -1067,11 +1070,12 @@ function validateBounds(bounds) {
     isNumber(bounds.bottom) &&
     isNumber(bounds.right);
 
-  if (!validBounds)
+  if (!validBounds) {
     throw new Error(
       'Bounds object is not valid. It can be: ' +
       'undefined, boolean (true|false) or an object {left, top, right, bottom}'
-    );
+    )
+  } else {return true};
 }
 
 function isNumber(x) {
@@ -1131,11 +1135,11 @@ function autoRun() {
         return;
       }
       // If we don't attach within 2 seconds to the target element, consider it a failure
-      console.error('Cannot find the panzoom element', globalName);
+      //console.error('Cannot find the panzoom element', globalName);
       return;
     }
     var options = collectOptions(panzoomScript);
-    console.log(options);
+    //console.log(options);
     window[globalName] = createPanZoom(el, options);
   }
 
@@ -1347,6 +1351,7 @@ function makeDomController(domElement, options) {
 
   function applyTransform(transform) {
     // TODO: Should we cache this?
+    //console.log(transform, domElement);
     domElement.style.transformOrigin = '0 0 0';
     domElement.style.transform = 'matrix(' +
       transform.scale + ', 0, 0, ' +
@@ -1527,7 +1532,7 @@ function animate(source, target, options) {
   // if nothing is specified, default to ease (similar to CSS animations)
   if (!easing) {
     if (options.easing) {
-      console.warn('Unknown easing function in amator: ' + options.easing);
+      //console.warn('Unknown easing function in amator: ' + options.easing);
     }
     easing = animations.ease
   }
