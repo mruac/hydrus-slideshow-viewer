@@ -62,9 +62,11 @@ export function loadFiles() {
 
     console.log(g.clientFiles);
 
-    ui.loadFileTags(file.navFile(0, true));
-    ui.loadFileNotes(file.navFile(0, true));
-    ui.loadFileMetadata(file.navFile(0, true));
+    const object_file = file.navFile(0, true);
+
+    ui.loadFileTags(object_file);
+    ui.loadFileNotes(object_file);
+    ui.loadFileMetadata(object_file);
     const numberOfFiles = g.clientFiles.reduce((acc, val) => {
         return acc + val.length;
     }, 0);
@@ -76,24 +78,26 @@ export function loadFiles() {
             const elem = $('<div/>', { 'id': `filePlaceholder${index}` });
             const obj_file = file.navFile(index, true);
             elem.append(obj_file['elem']);
+            if (index != 0) { elem.addClass('hidden'); }
+            file_placeholder.append(elem);
             if (index === 0) {
                 elem.addClass('visible');
-                elem.children('audio, video').trigger('play');
-                obj_file.panzoom.moveBy(0, 0);
-            } else { elem.addClass('hidden'); }
-            file_placeholder.append(elem);
+                ui.autofitpz(obj_file);
+                obj_file['elem'].children('audio, video').trigger('play');
+            }
         }
     } else {
         for (let index = 0; index < 3; index++) {
             const elem = $('<div/>', { 'id': `filePlaceholder${index}` });
             const obj_file = file.navFile(index - 1, true);
             elem.append(obj_file['elem']);
-            if (index - 1 === 0) {
-                elem.addClass('visible');
-                elem.children('audio, video').trigger('play');
-                obj_file.panzoom.moveBy(0, 0);
-            } else { elem.addClass('hidden'); }
+            if (index - 1 != 0) { elem.addClass('hidden'); }
             file_placeholder.append(elem);
+            if (index - 1 === 0) { 
+                elem.addClass('visible');
+                ui.autofitpz(obj_file);
+                obj_file['elem'].children('audio, video').trigger('play');
+             }
         }
     }
 }

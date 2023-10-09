@@ -123,7 +123,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                 preload_files();
                 setTimeout(() => {
                     tag.loadFiles();
-                }, 5000);
+                }, 0);
             } catch (e) {
                 //make loading bar red
                 //console.error(e);
@@ -146,7 +146,10 @@ function preload_files() {
             //console.log('hash: ' + metadata.hash);
             metadata['elem'] = loadFile(metadata);
             metadata['panzoom'] = createPanzoom(metadata);
-            autofitpz(metadata);
+            //autofit command has been moved to file.navFile() - if it becomes visible it will be auto-fit automatically.
+            //now I don't need to worry about autofitting hidden elements!
+            //now I just need to focus on making the autofit happen as fast as possible.
+            // autofitpz(metadata);
         }
     }
     return;
@@ -192,10 +195,10 @@ export function createPanzoom(metadata) {
     // elem.css({ opacity: 1 });
     $('#filePlaceholder').append(elem);
     const pz = panzoom(elem.children()[0], {
-        bounds: true, //TODO: turn this back on when finished processing files - the keepTransformInsideBounds() method creates unnecessary offsets in centerpz()
-        panX: false,
-        panY: false,
-        transformOrigin: { x: 0.5, y: 0.5 },
+        // bounds: true, //TODO: turn this back on when finished processing files - the keepTransformInsideBounds() method creates unnecessary offsets in centerpz()
+        panX: true,
+        panY: true,
+        transformOrigin: { x: 0.5, y: 0.5, relative: true },
     });
     pz.pause(); //prevent user pan/zoom
     elem.detach();
@@ -271,11 +274,10 @@ export async function autofitpz(obj, fit_type = 'auto') {
     //     centerpz(obj, container);
     // });
     //console.log('a');
-    // container.append(obj['elem'].css('visibility', 'hidden'));
+    obj['elem'].css('visibility', 'hidden');
     setTimeout(() => {
         //console.log('b');
         pz.zoomAbs(tf.x, tf.y, scale);
-        // obj['elem'].detach().css('visibility', '');
         //console.warn(pz.getTransform(), obj);
 
         setTimeout(() => {
@@ -283,13 +285,15 @@ export async function autofitpz(obj, fit_type = 'auto') {
 
 
             centerpz(obj);
+
             setTimeout(() => {
+                obj['elem'].css('visibility', '');
 
                 //console.warn(pz.getTransform(), obj);
                 //console.log('d');
-            }, 1000);
-        }, 1000);
-    }, 1000);
+            }, 0);
+        }, 0);
+    }, 0);
 
 
 
@@ -321,15 +325,17 @@ export async function centerpz(obj) {
     const container = $('#filePlaceholder');
     const el = $(obj.elem.children()[0]);
     const pz = obj.panzoom;
+    var madeVisible = false;
+    obj.elem.css('visibility', 'hidden');
     setTimeout(() => {
         //console.log('e');
 
         const el_dims = { width: 0, height: 0 };
         if (['P', 'AUDIO', 'VIDEO'].indexOf(el[0].nodeName) > -1) { //if non-hydrus file, e.g. no file <p>
-            container.append(obj.elem.css('visibility', 'hidden'));
+            // if (!obj.elem.is(':visible')) { container.append(obj.elem.css('visibility', 'hidden')); madeVisible = true; }
             el_dims.width = el.width();
             el_dims.height = el.height();
-            obj.elem.detach().css('visibility', '');
+            // if (madeVisible) { obj.elem.detach().css('visibility', ''); }
             // //console.log('centerpz hash: ' + obj.hash);
         } else if (obj.hasOwnProperty('hash')) {//if hydrus metadata
             el_dims.width = obj.width;
@@ -338,7 +344,7 @@ export async function centerpz(obj) {
         } else {
             //console.error('Could not identify file / element dimensions. Something might go wrong!', obj);
         }
-        console.log(obj.file_id + ' - ' + JSON.stringify(el_dims), obj);
+        // console.log(obj.file_id + ' - ' + JSON.stringify(el_dims), obj);
         // if (obj.hasOwnProperty('hash')) { //if hydrus metadata
         //     el_dims.width = obj.width;
         //     el_dims.height = obj.height;
@@ -358,23 +364,25 @@ export async function centerpz(obj) {
             x: (container_dims.width / 2) - ((el_dims.width * tf.scale) / 2),
             y: (container_dims.height / 2) - ((el_dims.height * tf.scale) / 2)
         };
-        console.log(pan, obj);
+        // console.log(pan, obj);
 
         //error here if pan.x || pan.y === NaN;
         // setTimeout(() => {
-        if (obj['elem'][0].nodeName != 'VIDEO') { //FIXME: video offsets for some reason? this has been excepted as video is already full width.
-            pz.setOptions({ bounds: undefined });
+        // if (obj['elem'][0].nodeName != 'VIDEO') { //FIXME: video offsets for some reason? this has been excepted as video is already full width.
+            //bounds must be set to false to prevent centering being offset due to keepTransformInsideBounds()
+            pz.setOptions({ bounds: false });
             setTimeout(() => {
                 pz.moveTo(pan.x, pan.y);
                 setTimeout(() => {
                     pz.setOptions({ bounds: true });
-                }, 1000);
-            }, 1000);
-        }
+                    obj.elem.css('visibility', '');
+                }, 0);
+            }, 0);
+        // }
 
         // }, 1000);
 
-    }, 1000);
+    }, 0);
     return;
 }
 

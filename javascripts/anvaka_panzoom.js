@@ -7,6 +7,10 @@
  * 
  * mruac changelog:
  * - added ability to restrict pan direction with panX and panY
+ * - Panzoom instance options can be changed with Panzoom.setOptions()
+ * - transformOrigin can now be set to be relative to the panzoom element, instead of the container, using transform.relative
+ * - TODO: keep element visibly within container if window is resized.
+ * 
 */
 
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.panzoom = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
@@ -461,6 +465,8 @@ function createPanZoom(domElement, options) {
       throw new Error('zoom requires valid numbers');
     }
 
+    if (!panX){}
+
     var newScale = transform.scale * ratio;
 
     if (newScale < minZoom) {
@@ -558,6 +564,7 @@ function createPanZoom(domElement, options) {
   }
 
   function listenForEvents() {
+    window.addEventListener('resize', onWindowResize, {passive: false});
     owner.addEventListener('mousedown', onMouseDown, { passive: false });
     owner.addEventListener('dblclick', onDoubleClick, { passive: false });
     owner.addEventListener('touchstart', onTouch, { passive: false });
@@ -906,6 +913,11 @@ function createPanZoom(domElement, options) {
     releaseDocumentMouse();
   }
 
+  function onWindowResize(){
+    //check if element is still within bounds
+    //if not, or is about to, move it so that it stays within bounds
+  }
+
   function releaseDocumentMouse() {
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
@@ -983,11 +995,19 @@ function createPanZoom(domElement, options) {
   }
 
   function getTransformOriginOffset() {
-    var ownerRect = owner.getBoundingClientRect();
-    return {
-      x: ownerRect.width * transformOrigin.x,
-      y: ownerRect.height * transformOrigin.y
-    };
+    if(transformOrigin.relative){
+      var bbox = panController.getBBox();
+      return {
+        x: transform.x + (bbox.width * transform.scale) * transformOrigin.x,
+        y: transform.y + (bbox.height * transform.scale) * transformOrigin.y
+      };
+    } else {
+      var ownerRect = owner.getBoundingClientRect();
+      return {
+        x: ownerRect.width * transformOrigin.x,
+        y: ownerRect.height * transformOrigin.y
+      };
+    }
   }
 
   function publicZoomTo(clientX, clientY, scaleMultiplier) {
@@ -1037,8 +1057,14 @@ function createPanZoom(domElement, options) {
 function parseTransformOrigin(options) {
   if (!options) return;
   if (typeof options === 'object') {
-    if (!isNumber(options.x) || !isNumber(options.y))
+    if(!options.relative){ options.relative = false; }
+    if (
+      !isNumber(options.x)
+      || !isNumber(options.y)
+      || typeof options.relative != 'boolean'
+      ) {
       failTransformOrigin(options);
+    }
     return options;
   }
 
@@ -1053,7 +1079,8 @@ function failTransformOrigin(options) {
       'Some good examples:',
       '  "center center" can be achieved with {x: 0.5, y: 0.5}',
       '  "top center" can be achieved with {x: 0.5, y: 0}',
-      '  "bottom right" can be achieved with {x: 1, y: 1}'
+      '  "bottom right" can be achieved with {x: 1, y: 1}',
+      '  relative to the element instead of container can be achieved with {relative: true}'
     ].join('\n')
   );
 }

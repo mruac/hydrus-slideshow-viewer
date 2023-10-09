@@ -215,10 +215,10 @@ $(document).on('keyup', (e) => {
         $('[for=\'zoomToggle\']').removeClass('active');
 
         if (!panzoom_persist) {
-            resetZoom(file.navFile(0, true)['panzoom']);
-            setTimeout(() => {
-                $('#filePlaceholder').removeAttr('style');
-            }, 50);
+            resetZoom(file.navFile(0, true));
+            // setTimeout(() => {
+            //     $('#filePlaceholder').removeAttr('style');
+            // }, 50);
         }
     }
 });
@@ -239,15 +239,16 @@ $('#zoomToggle').on('change', (e) => {
     } else {
         file.navFile(0, true)['panzoom'].pause();
         if (!panzoom_persist) {
-            resetZoom(file.navFile(0, true)['panzoom']);
-            setTimeout(() => {
-                $('#filePlaceholder').removeAttr('style');
-            }, 50);
+            resetZoom(file.navFile(0, true));
+            // setTimeout(() => {
+            //     $('#filePlaceholder').removeAttr('style');
+            // }, 50);
         }
     }
 });
 
-$('#window_fitToggle').on('click', () => {return;
+$('#window_fitToggle').on('click', () => {
+    return;
     const el = $('#window_fitToggle');
     const el_visible = el.find('svg:not(.hidden)');
     const file_metadata = file.navFile(0, true);
@@ -802,14 +803,17 @@ export function error_textInput(input_elem, error_msg) {
     return;
 }
 
-function resetZoom(instance) {
+function resetZoom(obj) {
     //recenter to fit window
-    instance.showRectangle($('#fileCanvas')[0].getBoundingClientRect());
-    instance.moveTo(0, 0); //required to set the css transforms, as the last command only sets it internally.
+    // pz.showRectangle($('#filePlaceholder')[0].getBoundingClientRect());
+    // pz.moveTo(0, 0); //required to set the css transforms, as the last command only sets it internally.
+    ui.autofitpz(obj);
 }
 
-$(window).on('resize', ()=>{
-   //TODO: refit 
+$(window).on('resize', () => {
+    //TODO: refit 
+        ui.autofitpz(file.navFile(0, true));
+    //TODO: keep elem in bounds if window is being resized.
 });
 
 function toggleUI() {
