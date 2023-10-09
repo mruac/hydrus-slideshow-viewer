@@ -121,9 +121,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
 
                 g.set_clientFiles(result);
                 preload_files();
-                setTimeout(() => {
                     tag.loadFiles();
-                }, 0);
             } catch (e) {
                 //make loading bar red
                 //console.error(e);
@@ -275,26 +273,20 @@ export async function autofitpz(obj, fit_type = 'auto') {
     // });
     //console.log('a');
     obj['elem'].css('visibility', 'hidden');
-    setTimeout(() => {
         //console.log('b');
         pz.zoomAbs(tf.x, tf.y, scale);
         //console.warn(pz.getTransform(), obj);
 
-        setTimeout(() => {
             //console.log('c');
 
 
             centerpz(obj);
 
-            setTimeout(() => {
                 obj['elem'].css('visibility', '');
 
                 //console.warn(pz.getTransform(), obj);
                 //console.log('d');
-            }, 0);
-        }, 0);
-    }, 0);
-
+            
 
 
     // });
@@ -327,7 +319,6 @@ export async function centerpz(obj) {
     const pz = obj.panzoom;
     var madeVisible = false;
     obj.elem.css('visibility', 'hidden');
-    setTimeout(() => {
         //console.log('e');
 
         const el_dims = { width: 0, height: 0 };
@@ -371,18 +362,13 @@ export async function centerpz(obj) {
         // if (obj['elem'][0].nodeName != 'VIDEO') { //FIXME: video offsets for some reason? this has been excepted as video is already full width.
             //bounds must be set to false to prevent centering being offset due to keepTransformInsideBounds()
             pz.setOptions({ bounds: false });
-            setTimeout(() => {
                 pz.moveTo(pan.x, pan.y);
-                setTimeout(() => {
                     pz.setOptions({ bounds: true });
                     obj.elem.css('visibility', '');
-                }, 0);
-            }, 0);
         // }
 
         // }, 1000);
 
-    }, 0);
     return;
 }
 
