@@ -40,6 +40,7 @@ export function commitTags() {
         }).done(function (response) {
             let metadata = response['metadata'][0];
             metadata['elem'] = ui.loadFile(metadata);
+            metadata['panzoom'] = ui.createPanzoom(metadata);
             g.clientFiles[file.currentPos.y][file.currentPos.x] = metadata;
             ui.loadFileTags(response['metadata'][0]);
             $('#committags').css('background-color', 'lime');
@@ -59,8 +60,6 @@ export function loadFiles() {
     $('#filePlaceholder div *').remove();
 
     $('#progress_bar').hide();
-
-    console.log(g.clientFiles);
 
     const object_file = file.navFile(0, true);
 

@@ -554,3 +554,11 @@ table {
   margin: inherit;
   font-weight: normal;
 }
+
+#progress_bar_status_container{
+  overflow: hidden;
+}
+
+#progress_bar_status{
+  position: relative;
+}

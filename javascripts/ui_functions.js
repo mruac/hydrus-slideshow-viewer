@@ -6,6 +6,7 @@ import * as g from './main.js';
 export const num_files_preload = 20;
 let job_id = 0;
 let SEARCH_THRESHOLD = 5000;
+var pushProgressBarStatus_interval = null;
 
 //get fileIDs from a tag search
 export function getFileMetaData(searches, order_type = 2, order = false) {
@@ -37,7 +38,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
             if (order != undefined) { data['file_sort_asc'] = order; }
             const status = `Getting search: ${g.client_named_Searches[i]}`;
             //console.debug(status)
-            $('#progress_bar_status').text(status);
+            pushProgressBarStatus(status);
 
             $.ajax({
                 crossDomain: true,
@@ -52,7 +53,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                     if (!(window.confirm(`Search "${g.client_named_Searches[i]}" has found more than ${SEARCH_THRESHOLD} files. This search may have produced more files than expected. \nContinue?`))) {
                         job_id++;
                         g.loading_error();
-                        $('#progress_bar_status').text('Search cancelled.');
+                        pushProgressBarStatus('Search cancelled.');
                         return;
                     }
                 }
@@ -88,7 +89,6 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                     }).fail((err) => {
                         g.loading_error();
 
-                        //FIXME: when it errors, the error is actually for the previous search.
                         g.error_textInput($('#command'), `Error on search '${g.client_named_Searches[i]}': ${err.responseText}`);
                     });
                 }
@@ -121,7 +121,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
 
                 g.set_clientFiles(result);
                 preload_files();
-                    tag.loadFiles();
+                tag.loadFiles();
             } catch (e) {
                 //make loading bar red
                 //console.error(e);
@@ -137,6 +137,31 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
     return searches
 }
 
+export function pushProgressBarStatus(msg) {
+    clearInterval(pushProgressBarStatus_interval);
+    //append message at top
+    const msg_el = $(`<span>${msg}<br/></span>`);
+    $('#progress_bar_status').prepend(msg_el).css({ top: `-${msg_el.height()}px` }).animate({ top: '0px' }, 250);
+
+    //if messages exceed limit, fadeout and remove the exceeding.
+    if ($('#progress_bar_status span').length > 6) {
+        $('#progress_bar_status span').slice(6).fadeOut({ duration: 250, done: (e) => { $(e.elem).remove() } })
+    }
+
+    //if no recent message pushes, fade them out after timeout
+    pushProgressBarStatus_interval = setInterval(() => {
+        $('#progress_bar_status span:last').fadeOut({
+            duration: 250,
+            done: (e) => {
+                $(e.elem).remove();
+                if ($('#progress_bar_status span').length < 2) {
+                    clearInterval(pushProgressBarStatus_interval);
+                }
+            }
+        })
+    }, g.menuTimeout_delay);
+}
+
 function preload_files() {
     for (let index = -(num_files_preload); index <= num_files_preload; index++) {
         const metadata = file.navFile(index, true);
@@ -144,10 +169,6 @@ function preload_files() {
             //console.log('hash: ' + metadata.hash);
             metadata['elem'] = loadFile(metadata);
             metadata['panzoom'] = createPanzoom(metadata);
-            //autofit command has been moved to file.navFile() - if it becomes visible it will be auto-fit automatically.
-            //now I don't need to worry about autofitting hidden elements!
-            //now I just need to focus on making the autofit happen as fast as possible.
-            // autofitpz(metadata);
         }
     }
     return;
@@ -193,7 +214,6 @@ export function createPanzoom(metadata) {
     // elem.css({ opacity: 1 });
     $('#filePlaceholder').append(elem);
     const pz = panzoom(elem.children()[0], {
-        // bounds: true, //TODO: turn this back on when finished processing files - the keepTransformInsideBounds() method creates unnecessary offsets in centerpz()
         panX: true,
         panY: true,
         transformOrigin: { x: 0.5, y: 0.5, relative: true },
@@ -204,7 +224,7 @@ export function createPanzoom(metadata) {
 }
 
 //zoom to fit
-export async function autofitpz(obj, fit_type = 'auto') {
+export function autofitpz(obj, fit_type = 'auto') {
     const pz = obj.panzoom;
     const container = $('body');
 
@@ -218,20 +238,11 @@ export async function autofitpz(obj, fit_type = 'auto') {
     if (obj.hasOwnProperty('hash')) { //if hydrus metadata
         el_dims.width = obj.width;
         el_dims.height = obj.height;
-        // //console.log('autofitting hash: ' + obj.hash);
     }
-    // else if (obj instanceof HTMLElement) { //if non-hydrus file, e.g. no file <p>
-    //     el_dims.width = obj.clientWidth;
-    //     el_dims.height = obj.clientHeight;
-    //     // //console.log('autofitting el: ' + obj.outerHTML);
-    // } else {
-    //     //console.error('Could not identify file / element dimensions. Something might go wrong!');
-    // }
     const container_dims = {
         width: container.width(),
         height: container.height()
     };
-    // if(container_dims.width != 1023 || container_dims.height != 680) {//console.error('dims mismatch! ' + JSON.stringify(container_dims));}
 
     const tf = pz.getTransform();
     const fit_to_width = container_dims.width / el_dims.width;
@@ -256,138 +267,43 @@ export async function autofitpz(obj, fit_type = 'auto') {
             }
             break;
     }
-    //console.warn(`scale: ${scale}; hash: ${obj.hash}`);
-    //error here if scale is Infinity
-
-    // pz.on('zoom', ()=>{
-    //     pz.off();
-    //         //console.log(pz.getTransform());
-    //     centerpz(obj, container);
-    //   });              
-
-    // //console.log(pz.getTransform());
-    // waitForElm(obj['elem'][0]).then(() => {
-    //     pz.zoomAbs(tf.x, tf.y, scale);
-    //     obj['elem'].detach();
-    //     centerpz(obj, container);
-    // });
-    //console.log('a');
     obj['elem'].css('visibility', 'hidden');
-        //console.log('b');
-        pz.zoomAbs(tf.x, tf.y, scale);
-        //console.warn(pz.getTransform(), obj);
-
-            //console.log('c');
-
-
-            centerpz(obj);
-
-                obj['elem'].css('visibility', '');
-
-                //console.warn(pz.getTransform(), obj);
-                //console.log('d');
-            
-
-
-    // });
-    // obj['elem'].detach();;
-
-
-    // //console.log(pz.getTransform());
+    pz.zoomAbs(tf.x, tf.y, scale);
+    centerpz(obj);
+    obj['elem'].css('visibility', '');
     return;
-
-    /* 
-    $('#filePlaceholder').append(obj['elem']);
-    setTimeout(() => {
-        pz.zoomAbs(tf.x, tf.y, scale);
-        obj['elem'].detach();
-        centerpz(obj, container);
-    }, 100);
-
-        $('#filePlaceholder').append(obj['elem'])
-    await waitForElm(obj['elem'][0]);
-        pz.zoomAbs(tf.x, tf.y, scale);
-
-    */
 }
 
 //center panzoom_elem
 //requires el to be visible / loaded into dom
-export async function centerpz(obj) {
+export function centerpz(obj) {
     const container = $('#filePlaceholder');
     const el = $(obj.elem.children()[0]);
     const pz = obj.panzoom;
-    var madeVisible = false;
     obj.elem.css('visibility', 'hidden');
-        //console.log('e');
 
-        const el_dims = { width: 0, height: 0 };
-        if (['P', 'AUDIO', 'VIDEO'].indexOf(el[0].nodeName) > -1) { //if non-hydrus file, e.g. no file <p>
-            // if (!obj.elem.is(':visible')) { container.append(obj.elem.css('visibility', 'hidden')); madeVisible = true; }
-            el_dims.width = el.width();
-            el_dims.height = el.height();
-            // if (madeVisible) { obj.elem.detach().css('visibility', ''); }
-            // //console.log('centerpz hash: ' + obj.hash);
-        } else if (obj.hasOwnProperty('hash')) {//if hydrus metadata
-            el_dims.width = obj.width;
-            el_dims.height = obj.height;
-            // //console.log('centerpz el: ' + obj.outerHTML);
-        } else {
-            //console.error('Could not identify file / element dimensions. Something might go wrong!', obj);
-        }
-        // console.log(obj.file_id + ' - ' + JSON.stringify(el_dims), obj);
-        // if (obj.hasOwnProperty('hash')) { //if hydrus metadata
-        //     el_dims.width = obj.width;
-        //     el_dims.height = obj.height;
-        //     // //console.log('centerpz hash: ' + obj.hash);
-        // } else if (obj instanceof HTMLElement) { //if non-hydrus file, e.g. no file <p>
-        //     el_dims.width = obj.clientWidth;
-        //     el_dims.height = obj.clientHeight;
-        //     // //console.log('centerpz el: ' + obj.outerHTML);
-        // } else {
-        //     //console.error('Could not identify file / element dimensions. Something might go wrong!');
-        // }
-        const container_dims = { width: container.width(), height: container.height() };
-        // if(container_dims.width != 1023 || container_dims.height != 680) {//console.error('dims mismatch! ' + JSON.stringify(container_dims));}
-        // let el_rect = el.getBoundingClientRect();
-        const tf = pz.getTransform();
-        const pan = {
-            x: (container_dims.width / 2) - ((el_dims.width * tf.scale) / 2),
-            y: (container_dims.height / 2) - ((el_dims.height * tf.scale) / 2)
-        };
-        // console.log(pan, obj);
-
-        //error here if pan.x || pan.y === NaN;
-        // setTimeout(() => {
-        // if (obj['elem'][0].nodeName != 'VIDEO') { //FIXME: video offsets for some reason? this has been excepted as video is already full width.
-            //bounds must be set to false to prevent centering being offset due to keepTransformInsideBounds()
-            pz.setOptions({ bounds: false });
-                pz.moveTo(pan.x, pan.y);
-                    pz.setOptions({ bounds: true });
-                    obj.elem.css('visibility', '');
-        // }
-
-        // }, 1000);
-
+    const el_dims = { width: 0, height: 0 };
+    if (['P', 'AUDIO', 'VIDEO'].indexOf(el[0].nodeName) > -1) { //if non-hydrus file, e.g. no file <p>
+        el_dims.width = el.width();
+        el_dims.height = el.height();
+    } else if (obj.hasOwnProperty('hash')) {//if hydrus metadata
+        el_dims.width = obj.width;
+        el_dims.height = obj.height;
+    } else {
+        console.error('Could not identify file / element dimensions. Something might go wrong!', obj);
+    }
+    const container_dims = { width: container.width(), height: container.height() };
+    const tf = pz.getTransform();
+    const pan = {
+        x: (container_dims.width / 2) - ((el_dims.width * tf.scale) / 2),
+        y: (container_dims.height / 2) - ((el_dims.height * tf.scale) / 2)
+    };
+    //bounds must be set to false to prevent centering being offset due to keepTransformInsideBounds()
+    pz.setOptions({ bounds: false });
+    pz.moveTo(pan.x, pan.y);
+    pz.setOptions({ bounds: true });
+    obj.elem.css('visibility', '');
     return;
-}
-
-function waitForElm(el) {
-    return new Promise(resolve => {
-        if (document.contains(el)) { return resolve(el); }
-
-        const observer = new MutationObserver(() => {
-            if (document.contains(el)) {
-                observer.disconnect();
-                resolve(el);
-            }
-        });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    });
 }
 
 export function update_currentPos_display() {

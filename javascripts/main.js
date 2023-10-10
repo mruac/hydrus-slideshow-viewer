@@ -45,7 +45,7 @@ matrix(scaleX(), skewY(), skewX(), scaleY(), translateX(), translateY())
 */
 
 const MAX_TIMER_INT = 2147483647;
-const SWIPE_THRESHOLD = 100;
+var SWIPE_THRESHOLD = 100;
 const sort_val_to_sort_int = {
     '0': [0, true],
     '1': [0, false],
@@ -182,10 +182,21 @@ if (localStorage['hideSidebarDelay'] != undefined) {
     $('#sidebarDelay').val('2000');
     menuTimeout_delay = 2000;
 }
+if (localStorage['swipeThreshold'] != undefined) {
+    $('#swipeThreshold').val(localStorage['swipeThreshold']);
+    SWIPE_THRESHOLD = localStorage['swipeThreshold'];
+} else {
+    $('#swipeThreshold').val('100');
+    SWIPE_THRESHOLD = 100;
+}
 
 $('#sidebarDelay').on('keyup', function (event) {
     localStorage.setItem('hideSidebarDelay', $(event.target).val());
     menuTimeout_delay = $(event.target).val();
+});
+$('#swipeThreshold').on('keyup', function (event) {
+    localStorage.setItem('swipeThreshold', $(event.target).val());
+    SWIPE_THRESHOLD = $(event.target).val();
 });
 
 $('#custom_namespace').on('keyup', function (event) {
@@ -468,7 +479,7 @@ export function loading_error() {
 
     setTimeout(() => {
         $('#progress_bar').hide();
-        $('#progress_bar_status').text('');
+        $('#progress_bar_status span').remove();
     }, 10000);
     return;
 }
@@ -495,7 +506,7 @@ $('#submitButton').on('click', async function () {
         return;
     }
     $('#progress_bar').show();
-    $('#progress_bar_status').text('');
+    $('#progress_bar_status span').remove();
     $('.progress').removeClass('border-danger').addClass('border-secondary');
     $('.progress-bar').removeClass('bg-danger').addClass('bg-secondary')
     $('.progress-bar').css('width', `0%`);
@@ -797,7 +808,7 @@ export function error_textInput(input_elem, error_msg) {
 
     if (error_msg) {
         console.error(error_msg);
-        $('#progress_bar_status').text(error_msg);
+        ui.pushProgressBarStatus(error_msg);
     }
 
     return;
@@ -805,13 +816,10 @@ export function error_textInput(input_elem, error_msg) {
 
 function resetZoom(obj) {
     //recenter to fit window
-    // pz.showRectangle($('#filePlaceholder')[0].getBoundingClientRect());
-    // pz.moveTo(0, 0); //required to set the css transforms, as the last command only sets it internally.
     ui.autofitpz(obj);
 }
 
 $(window).on('resize', () => {
-    //TODO: refit 
         ui.autofitpz(file.navFile(0, true));
     //TODO: keep elem in bounds if window is being resized.
 });
