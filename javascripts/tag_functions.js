@@ -57,7 +57,7 @@ export function loadFiles() {
     ui.update_currentPos_display();
     ui.update_file_numbers();
 
-    $('#filePlaceholder div *').remove();
+    $('.filePlaceholder').remove();
 
     $('#progress_bar').hide();
 
@@ -70,33 +70,34 @@ export function loadFiles() {
         return acc + val.length;
     }, 0);
     const file_placeholder = $('#filePlaceholder');
+
     file_placeholder.find('div').remove();
 
     if (numberOfFiles < 3) {
         for (let index = 0; index < numberOfFiles; index++) {
-            const elem = $('<div/>', { 'id': `filePlaceholder${index}` });
+            const elem = $('<div/>', { id: `filePlaceholder${index}`, class: 'filePlaceholder' });
             const obj_file = file.navFile(index, true);
             elem.append(obj_file['elem']);
             if (index != 0) { elem.addClass('hidden'); }
             file_placeholder.append(elem);
             if (index === 0) {
                 elem.addClass('visible');
-                ui.autofitpz(obj_file);
+                ui.autofitpz(obj_file, g.fit_type);
                 obj_file['elem'].children('audio, video').trigger('play');
             }
         }
     } else {
         for (let index = 0; index < 3; index++) {
-            const elem = $('<div/>', { 'id': `filePlaceholder${index}` });
+            const elem = $('<div/>', { id: `filePlaceholder${index}`, class: 'filePlaceholder' });
             const obj_file = file.navFile(index - 1, true);
             elem.append(obj_file['elem']);
             if (index - 1 != 0) { elem.addClass('hidden'); }
             file_placeholder.append(elem);
-            if (index - 1 === 0) { 
+            if (index - 1 === 0) {
                 elem.addClass('visible');
-                ui.autofitpz(obj_file);
+                ui.autofitpz(obj_file, g.fit_type);
                 obj_file['elem'].children('audio, video').trigger('play');
-             }
+            }
         }
     }
 }

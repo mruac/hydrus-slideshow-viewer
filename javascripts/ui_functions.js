@@ -88,7 +88,6 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                         next();
                     }).fail((err) => {
                         g.loading_error();
-
                         g.error_textInput($('#command'), `Error on search '${g.client_named_Searches[i]}': ${err.responseText}`);
                     });
                 }
@@ -116,8 +115,7 @@ export function getFileMetaData(searches, order_type = 2, order = false) {
                     if (result[index].length === 0) { result[index] = [{ 'mime': 'no_file' }] }
                 }
 
-                //console.info(`${numberOfFiles} files found across ${result.length} searches!`)
-                //console.debug({ 'fileMetadatas': result });
+                console.info(`${numberOfFiles} files found across ${result.length} searches!`, result);
 
                 g.set_clientFiles(result);
                 preload_files();
@@ -162,13 +160,12 @@ export function pushProgressBarStatus(msg) {
     }, g.menuTimeout_delay);
 }
 
-function preload_files() {
+export function preload_files() {
     for (let index = -(num_files_preload); index <= num_files_preload; index++) {
         const metadata = file.navFile(index, true);
         if (!metadata.hasOwnProperty('elem') && !metadata.hasOwnProperty('panzoom')) {
-            //console.log('hash: ' + metadata.hash);
-            metadata['elem'] = loadFile(metadata);
-            metadata['panzoom'] = createPanzoom(metadata);
+            metadata.elem = loadFile(metadata);
+            metadata.panzoom = createPanzoom(metadata);
         }
     }
     return;
@@ -183,6 +180,7 @@ export function loadFile(fileMetadata) {
         case 'image/x-png':
         case 'image/png':
         case 'image/apng':
+        case 'image/avif':
         case 'image/gif':
         case 'image/bmp':
         case 'image/webp':
@@ -190,6 +188,7 @@ export function loadFile(fileMetadata) {
         case 'image/x-icon':
         case 'image/vnd.microsoft.icon':
         case 'image':
+        case 'image/svg+xml':
             return file.createElem('img', fileMetadata);
         case 'video/mp4':
         case 'video/webm':
@@ -217,6 +216,15 @@ export function createPanzoom(metadata) {
         panX: true,
         panY: true,
         transformOrigin: { x: 0.5, y: 0.5, relative: true },
+        boundsPadding: 0.4, //don't exceed the half of container (0.5) to prevent zoom issues
+        boundsDisabledForZoom: true
+        // bounds: {
+        //     top: 0,
+        //     left: 0,
+        //     bottom: $('body').height(),
+        //     right: $('body').width()
+        // },
+        // boundsContain: true
     });
     pz.pause(); //prevent user pan/zoom
     elem.detach();
@@ -227,8 +235,13 @@ export function createPanzoom(metadata) {
 export function autofitpz(obj, fit_type = 'auto') {
     const pz = obj.panzoom;
     const container = $('body');
+    const el = $(obj.elem.children()[0]);
+    //FIXME: When navving back and forth fast enough while the pan animation is still occuring, autofitpz() does not execute.
+    //pan to edge fast enough to cause the smooth pan animation, nav file by exceeding the edge, then nav back fast enough.
+    // if(pz.getTransform().moveByAnimation){pz.getTransform().moveByAnimation.cancel();}
+    // window.cancelAnimationFrame(pz.getTransform().frameAnimation);
 
-    if (['P', 'AUDIO', 'VIDEO'].indexOf(obj['elem'].children()[0].nodeName) > -1) {
+    if (['P', 'AUDIO', 'VIDEO'].indexOf(el[0].nodeName) > -1) {
         //just only center the element
         centerpz(obj);
         return;
@@ -238,6 +251,9 @@ export function autofitpz(obj, fit_type = 'auto') {
     if (obj.hasOwnProperty('hash')) { //if hydrus metadata
         el_dims.width = obj.width;
         el_dims.height = obj.height;
+    } else {
+        el_dims.width = el.width();
+        el_dims.height = el.height();
     }
     const container_dims = {
         width: container.width(),
@@ -249,16 +265,31 @@ export function autofitpz(obj, fit_type = 'auto') {
     const fit_to_height = container_dims.height / el_dims.height;
     //console.log(JSON.stringify({ container: container_dims, el_dims: el_dims, calc_fit: { width: fit_to_width, height: fit_to_height } }));
     var scale = 0;
+    if (isNaN(tf.x) || isNaN(tf.y)) { console.error('Unable to get panzoom pos, aborting autofitpz.', obj); return; };
 
     switch (fit_type) {
         case 'width':
             scale = fit_to_width; //fit to width
+            pz.setOptions({ panX: false, panY: true });
             break;
         case 'height':
             scale = fit_to_height; //fit to height
+            pz.setOptions({ panX: true, panY: false });
             break;
-        case 'auto': //fit to container
+        case 'auto-shrink': //shrink to fit container
+            pz.setOptions({ panX: true, panY: true });
+            scale = 1;
+            if (el_dims.width > container_dims.width || el_dims.height > container_dims.height) {
+                if ((el_dims.height * fit_to_width) > container_dims.height) {
+                    scale = fit_to_height; //fit to height
+                } else {
+                    scale = fit_to_width; //fit to width
+                }
+            }
+            break;
+        case 'auto': //shrink and expand to fit container
         default:
+            pz.setOptions({ panX: true, panY: true });
             //if fit to width, will the el's height exceed the container height?
             if ((el_dims.height * fit_to_width) > container_dims.height) {
                 scale = fit_to_height; //fit to height
@@ -267,42 +298,54 @@ export function autofitpz(obj, fit_type = 'auto') {
             }
             break;
     }
-    obj['elem'].css('visibility', 'hidden');
+
+    el.css('visibility', 'hidden');
     pz.zoomAbs(tf.x, tf.y, scale);
     centerpz(obj);
-    obj['elem'].css('visibility', '');
+    el.css('visibility', '');
     return;
 }
 
 //center panzoom_elem
 //requires el to be visible / loaded into dom
+//FIXME: does not center when switching fit_type modes while panzoom is active.
 export function centerpz(obj) {
     const container = $('#filePlaceholder');
     const el = $(obj.elem.children()[0]);
     const pz = obj.panzoom;
-    obj.elem.css('visibility', 'hidden');
-
-    const el_dims = { width: 0, height: 0 };
-    if (['P', 'AUDIO', 'VIDEO'].indexOf(el[0].nodeName) > -1) { //if non-hydrus file, e.g. no file <p>
-        el_dims.width = el.width();
-        el_dims.height = el.height();
-    } else if (obj.hasOwnProperty('hash')) {//if hydrus metadata
-        el_dims.width = obj.width;
-        el_dims.height = obj.height;
-    } else {
-        console.error('Could not identify file / element dimensions. Something might go wrong!', obj);
+    //wait until file has dimensions to work with
+    if (!el[0].complete || (el.width() === 0 && el.height() === 0)) {
+        el.on('load', function () {
+            centerpz(obj);
+            return;
+        });
     }
+
+    el.css('visibility', 'hidden');
+    const el_dims = { width: 0, height: 0 };
+    el_dims.width = el.width();
+    el_dims.height = el.height();
     const container_dims = { width: container.width(), height: container.height() };
     const tf = pz.getTransform();
     const pan = {
         x: (container_dims.width / 2) - ((el_dims.width * tf.scale) / 2),
         y: (container_dims.height / 2) - ((el_dims.height * tf.scale) / 2)
     };
-    //bounds must be set to false to prevent centering being offset due to keepTransformInsideBounds()
+
+    if (isNaN(pan.x) || isNaN(pan.y)) {
+        console.error(`Unable to calculate center pos, aborting centerpz.`, {
+            el_dims: el_dims,
+            container_dims: container_dims,
+            pz_transform: tf,
+            pan: pan,
+        }, obj);
+        obj.elem.css('visibility', '');
+        return;
+    };
     pz.setOptions({ bounds: false });
     pz.moveTo(pan.x, pan.y);
     pz.setOptions({ bounds: true });
-    obj.elem.css('visibility', '');
+    el.css('visibility', '');
     return;
 }
 

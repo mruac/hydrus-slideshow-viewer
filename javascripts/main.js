@@ -7,10 +7,11 @@ export let clientKey = '',
     clientFiles = [],
     client_named_Searches = [],
     menuTimeout, cursor_timeout,
-    menuTimeout_delay = 2000,
+    menuTimeout_delay = 3000,
     nav_increment = 1,
     panzoom_persist = false,
-    floating_notes_persist = false;
+    floating_notes_persist = false,
+    fit_type = 'auto';
 
 var touch_start;
 
@@ -18,31 +19,6 @@ let is_fullscreenchange_event = true;
 
 const offcanvasElementList = document.querySelectorAll('.offcanvas');
 const offcanvasList = [...offcanvasElementList].map(offcanvasEl => new bootstrap.Offcanvas(offcanvasEl));
-
-// this panzooms the container, not the image
-// const panzoom_elem = panzoom(document.querySelectorAll('#filePlaceholder'), {
-//     bounds: true,
-//     boundsPadding: 0.4,
-//     maxZoom: 200,
-//     minZoom: 0.1,
-//autocenter: true
-//     zoomDoubleClickSpeed: 1,
-//     filterKey: function (/* e, dx, dy, dz */) {
-//         // don't let panzoom handle this event:
-//         return true;
-//     }
-// });
-// panzoom_elem.pause();
-
-//recenter to fit window
-//panzoom_elem.showRectangle(document.querySelector('#fileCanvas').getBoundingClientRect());
-// panzoom_elem.moveBy(0,0); //required to set the css transforms, as the last command only sets it internally.
-
-/* 
-matrix(scaleX(), skewY(), skewX(), scaleY(), translateX(), translateY())
-
-
-*/
 
 const MAX_TIMER_INT = 2147483647;
 var SWIPE_THRESHOLD = 100;
@@ -224,13 +200,7 @@ $(document).on('keyup', (e) => {
     if (e.key === 'Control') {
         file.navFile(0, true)['panzoom'].pause();
         $('[for=\'zoomToggle\']').removeClass('active');
-
-        if (!panzoom_persist) {
-            resetZoom(file.navFile(0, true));
-            // setTimeout(() => {
-            //     $('#filePlaceholder').removeAttr('style');
-            // }, 50);
-        }
+        resetZoom(file.navFile(0, true));
     }
 });
 
@@ -243,23 +213,16 @@ $('.popup select').on('change', function (e) {
 
 });
 
-
 $('#zoomToggle').on('change', (e) => {
     if ($(e.target).is(':checked')) {
         file.navFile(0, true)['panzoom'].resume();
     } else {
         file.navFile(0, true)['panzoom'].pause();
-        if (!panzoom_persist) {
-            resetZoom(file.navFile(0, true));
-            // setTimeout(() => {
-            //     $('#filePlaceholder').removeAttr('style');
-            // }, 50);
-        }
+        resetZoom(file.navFile(0, true));
     }
 });
 
 $('#window_fitToggle').on('click', () => {
-    return;
     const el = $('#window_fitToggle');
     const el_visible = el.find('svg:not(.hidden)');
     const file_metadata = file.navFile(0, true);
@@ -271,38 +234,28 @@ $('#window_fitToggle').on('click', () => {
         //fit width
         case el_visible.hasClass('bi-arrows-fullscreen'):
             el.find('.bi-arrows').removeClass('hidden');
-            $('#css').html(
-                '#fileCanvas img, #fileCanvas video {width: 100%; height: initial;}'
-            );
-            if ((file_metadata.height * (window.innerWidth / file_metadata.width)) > window.innerHeight) {
-                $('#fileCanvas .visible *').css('position', 'initial');
-            }
+            fit_type = 'width';
             break;
 
         //fit height
         case el_visible.hasClass('bi-arrows'):
-            el.find('.bi-arrows-vertical').removeClass('hidden');;
-            $('#css').html(
-                '#fileCanvas img, #fileCanvas video {width: initial; height: 100%;}'
-            );
+            el.find('.bi-arrows-vertical').removeClass('hidden');
+            fit_type = 'height';
             break;
 
         //shrink to fit / original size
         case el_visible.hasClass('bi-arrows-vertical'):
-            el.find('.bi-aspect-ratio').removeClass('hidden');;
-            $('#css').html(
-                '#fileCanvas img, #fileCanvas video {max-width: 100%; max-height: 100%;}'
-            );
+            el.find('.bi-aspect-ratio').removeClass('hidden');
+            fit_type = 'auto-shrink';
             break;
 
         //shrink/expand to fit (default)
         case el_visible.hasClass('bi-aspect-ratio'):
-            el.find('.bi-arrows-fullscreen').removeClass('hidden');;
-            $('#css').html(
-                '#fileCanvas img, #fileCanvas video {width: 100%; height: 100%;}'
-            );
+            el.find('.bi-arrows-fullscreen').removeClass('hidden');
+            fit_type = 'auto';
             break;
     }
+    ui.autofitpz(file_metadata, fit_type);
 });
 
 $('#panzoom_persist').on('change', (e) => {
@@ -334,6 +287,14 @@ $('#tagRepositoryList , #displayTagToggle').each(function (i, v) {
     });
 });
 
+$('#fileCanvas').on('click', function (e) {
+    offcanvasList.forEach((v) => { v.hide(); });
+    //prevents media from playing upon mouse swipe
+    if (['VIDEO', 'AUDIO'].indexOf(e.target.nodeName) > -1) {
+        e.preventDefault();
+    }
+})
+
 var pointer_start = null;
 
 $('#fileCanvas').on('mousedown', function (e) {
@@ -343,52 +304,113 @@ $('#fileCanvas').on('mousedown', function (e) {
 var prev_pointer;
 $('#fileCanvas').on('mousemove', function (e) {
     if (prev_pointer === null) { return; }
-    if (false/* pointer_start != null */) {
-        //file scroll
-        const aaa = $('#filePlaceholder')[0].scrollWidth / $('#filePlaceholder')[0].clientWidth;
-        const directionX = aaa * (e.clientX - prev_pointer.clientX);
-        const directionY = aaa * (e.clientY - prev_pointer.clientY);
-        $('#filePlaceholder')[0].scrollBy(-directionX, -directionY);
-    }
     prev_pointer = e;
 });
 
 $('#fileCanvas').on('mouseup ', function (e) {
+
+    if (clientFiles.length === 0 || pointer_start === null) { return; }
+    //TODO: check if exceed swipeable region of pan and filenav in that direction. aka "force swipe"
+    //maybe? shift the file to the opposite side of the exceeded side to "simulate" a page turn - so that the next/prev file is not centered if exceeded pan swipe
+    //also consider when in fit to width / vertical swipe mode.
     let pointer_end = e;
     const directionX = pointer_end.clientX - pointer_start.clientX;
     const directionY = pointer_end.clientY - pointer_start.clientY;
     pointer_start = null;
+    const curr_file = file.navFile(0, true);
 
     //don't nav while zooming, but allow toggleUI()
     if (
-        (
-            (Math.abs(directionX) < SWIPE_THRESHOLD) &&
-            (Math.abs(directionY) < SWIPE_THRESHOLD) &&
-            file.navFile(0, true)['panzoom'].isPaused()
-        )
-        || !file.navFile(0, true)['panzoom'].isPaused()
+        //within horizontal and vertical threshold
+        (Math.abs(directionX) < SWIPE_THRESHOLD) &&
+        (Math.abs(directionY) < SWIPE_THRESHOLD)
     ) {
+        //normal click
         toggleUI();
+        if (['VIDEO'].indexOf(e.target.nodeName) > -1) {
+            e.target[e.target.paused ? 'play' : 'pause'](); //simulates click on HTML5 video player
+        }
     } else {
+        //if within vertical threshold, and is swiping horizontally
+        //filenav when either panzoom is off, or when file is at x boundsPadding when panzoom is on
         if (
-            (Math.abs(directionY) < SWIPE_THRESHOLD) &&
-            file.navFile(0, true)['panzoom'].isPaused()
+            Math.abs(directionY) < SWIPE_THRESHOLD /*  && fit_type != 'width' */
         ) {
             if ( //+, swipe left
                 directionX < -(SWIPE_THRESHOLD) &&
-                Math.round($('#filePlaceholder').scrollLeft()) >= ($('#filePlaceholder')[0].scrollWidth - $('#filePlaceholder')[0].clientWidth)
+                //if panzoom is off or;
+                curr_file.panzoom.isPaused() ||
+                //if panzoom is at edge of boundsPadding
+                (!curr_file.panzoom.isPaused() && (
+                    //x left: if right of file at the left of boundsPadding
+                    Math.trunc(curr_file.elem.width() * curr_file.panzoom.getTransform().boundsPadding) === Math.abs(Math.trunc(curr_file.panzoom.getTransform().x + (curr_file.width * curr_file.panzoom.getTransform().scale)))
+                ))
             ) {
-                file.navFile(-1);
+                navNextFile();
             }
             else if ( //-, swipe right
                 directionX > SWIPE_THRESHOLD &&
-                $('#filePlaceholder').scrollLeft() === 0
+                //if panzoom is off or;
+                curr_file.panzoom.isPaused() ||
+                //if panzoom is at edge of boundsPadding
+                (!curr_file.panzoom.isPaused() && (
+                    //x right: if left of file at the right of boundsPadding
+                    Math.abs(Math.trunc(curr_file.elem.width() * (1 - curr_file.panzoom.getTransform().boundsPadding))) === Math.abs(Math.trunc(curr_file.panzoom.getTransform().x))
+                ))
             ) {
-                file.navFile(1);
+                navPrevFile();
+            }
+        }
+        //now the other way! - but only when vertical pan is enabled (fit to width)
+        //if within horizontal threshold, and is swiping vertically
+        //filenav when either panzoom is off, or when file is at y boundsPadding when panzoom is on
+        if (Math.abs(directionX) < SWIPE_THRESHOLD && fit_type === 'width') {
+
+            if ( //+, swipe up
+                directionY < -(SWIPE_THRESHOLD) &&
+                curr_file.panzoom.isPaused() ||
+                (!curr_file.panzoom.isPaused() && (
+                    //y top: if bottom of file at the top of boundsPadding
+                    Math.trunc(curr_file.elem.height() * curr_file.panzoom.getTransform().boundsPadding) === Math.abs(Math.trunc(curr_file.panzoom.getTransform().y + (curr_file.height * curr_file.panzoom.getTransform().scale)))
+                ))
+            ) {
+                navNextFile();
+            }
+            else if ( //-, swipe down
+                directionY > SWIPE_THRESHOLD &&
+                curr_file.panzoom.isPaused() ||
+                (!curr_file.panzoom.isPaused() && (
+                    //y bottom: if top of file at the bottom of boundsPadding
+                    Math.abs(Math.trunc(curr_file.elem.height() * (1 - curr_file.panzoom.getTransform().boundsPadding))) === Math.abs(Math.trunc(curr_file.panzoom.getTransform().y))
+                ))
+            ) {
+                navPrevFile();
             }
         }
     }
 });
+
+function navPrevFile() {
+    // const curr_file = file.navFile(0, true);
+    // if (panzoom_persist && $('#zoomToggle').prop('checked')) {
+    //     curr_file.panzoom.resume();
+    // } else if (!panzoom_persist && !curr_file.panzoom.isPaused()) {
+    //     curr_file.panzoom.pause();
+    //     $('#zoomToggle').prop('checked', false);
+    // }
+    file.navFile(-1);
+}
+
+function navNextFile() {
+    // const curr_file = file.navFile(0, true);
+    // if (panzoom_persist && $('#zoomToggle').prop('checked')) {
+    //     curr_file.panzoom.resume();
+    // } else if (!panzoom_persist && !curr_file.panzoom.isPaused()) {
+    //     curr_file.panzoom.pause();
+    //     $('#zoomToggle').prop('checked', false);
+    // }
+    file.navFile(1);
+}
 
 $('#fileCanvas').on('touchstart', function (e) {
     //set starting pos of touch
@@ -511,6 +533,7 @@ $('#submitButton').on('click', async function () {
     $('.progress-bar').removeClass('bg-danger').addClass('bg-secondary')
     $('.progress-bar').css('width', `0%`);
     $('.popup').addClass('d-none');
+    $('#zoomToggle').prop('checked', false);
 
     $('#filePlaceholder *').remove();
     $('#filePlaceholder *').removeClass('visible').addClass('hidden');
@@ -658,6 +681,7 @@ $(document).on('keyup', (event) => {
 
     if (event.key === 'ArrowLeft') { //left
         event.preventDefault();
+        if (clientFiles.length === 0) { return; }
         if (event.shiftKey) {
             file.navFile(-(nav_increment));
         } else {
@@ -666,6 +690,7 @@ $(document).on('keyup', (event) => {
     }
     else if (event.key === 'ArrowRight') { //right
         event.preventDefault();
+        if (clientFiles.length === 0) { return; }
         if (event.shiftKey) {
             file.navFile(nav_increment);
         } else {
@@ -673,6 +698,7 @@ $(document).on('keyup', (event) => {
         }
     } else if (event.key === 'R' || event.key === 'r') {
         event.preventDefault();
+        if (clientFiles.length === 0) { return; }
         file.navRandomFile();
     } else if (event.key === 'F' || event.key === 'f') {
         event.preventDefault();
@@ -755,10 +781,6 @@ $('#file_jump_previous').on('click', () => {
     file.navFile(-(nav_increment));
 });
 
-$('#fileCanvas').on('click', function (event) {
-    offcanvasList.forEach((v) => { v.hide(); });
-})
-
 new bootstrap.ScrollSpy($('#file_info_notefield'), {
     target: $('#file_info_notes')
 });
@@ -770,6 +792,7 @@ $('#file_info_notefield').on('activate.bs.scrollspy', function (e) {
 });
 
 $('#fileCanvas').on('wheel', function (event) {
+    if (clientFiles.length === 0) { return; }
     if (event.ctrlKey) { event.preventDefault(); } //prevent ctrl zoom for panzoom shortcut
 
     if (file.navFile(0, true)['panzoom'].isPaused()) {
@@ -815,13 +838,13 @@ export function error_textInput(input_elem, error_msg) {
 }
 
 function resetZoom(obj) {
-    //recenter to fit window
-    ui.autofitpz(obj);
+    if (clientFiles.length === 0) { return; }
+    ui.autofitpz(obj, fit_type);
 }
 
 $(window).on('resize', () => {
-        ui.autofitpz(file.navFile(0, true));
-    //TODO: keep elem in bounds if window is being resized.
+    if (clientFiles.length === 0) { return; }
+    ui.autofitpz(file.navFile(0, true), fit_type);
 });
 
 function toggleUI() {

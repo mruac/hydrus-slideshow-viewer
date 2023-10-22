@@ -15,7 +15,10 @@ export function createElem(type, content) {
             container_div.append($('<p/>', {}).text(content));
             break;
         case 'img':
-            container_div.append($('<img/>', { 'src': url, }));
+            container_div.append($('<img/>', { 'src': url, 'role': 'img' }));
+            break;
+        case 'object':
+            container_div.append($(`<object data="${url}"/>`));
             break;
         case 'video':
         case 'audio':
@@ -58,12 +61,11 @@ export function navFile(increment, requireReturn = false) {
     }
 
     if (g.clientFiles?.[y]?.[x] === undefined) {
-        console.error(`Something went wrong while returning navFile(${increment}, ${requireReturn}), where the currentPos is ${JSON.stringify(currentPos)}`);
+        console.error(`Something went wrong while returning navFile(${increment}, ${requireReturn}), where the currentPos is ${JSON.stringify(currentPos)}`, g.clientFiles);
         return;
     }
 
     if (requireReturn) {
-        // console.debug(`returned [${y}][${x}]`)
         return g.clientFiles[y][x];
     } else {
         currentPos.y = y, currentPos.x = x;
@@ -76,78 +78,45 @@ export function navFile(increment, requireReturn = false) {
         const is_tall_and_fit_width = $('#window_fitToggle svg:not(.hidden)').hasClass('bi-arrows') &&
             ((file_metadata.height * (window.innerWidth / file_metadata.width)) > window.innerHeight);
 
-        console.debug(`loaded [${y}][${x}]`)
-
         const filePlaceholder = $('#filePlaceholder').children();
         //filePlaceholder[i] = find the one that is hidden
         let i = $('.visible').index();
+        ui.preload_files();
 
-        const num_files_preload_batch = Math.floor(ui.num_files_preload / 2);
+        if (g.panzoom_persist && $('#zoomToggle').prop('checked')) {
+            file_metadata.panzoom.resume();
+        } else if (!g.panzoom_persist || !$('#zoomToggle').prop('checked')) {
+            file_metadata.panzoom.pause();
+            $('#zoomToggle').prop('checked', false);
+        }
 
-        if (increment > 0) {//+
-            //TODO: put preload files back in: navFile navRandomFile jumpToFile
-            //check if ['elem'] exists, if not, preload around it
+        //hide filePlaceholder[i], show next file in the next elem, load the file after in the elem after.
+        if (increment === 1) {//+1
+            $(filePlaceholder[i]).removeClass('visible').addClass('hidden');
+            $(filePlaceholder[i]).find('audio, video').trigger('pause');
 
-            //preload next batch of  files if there is navFile(25, true)['elem'] === undefined
-            if (navFile(num_files_preload_batch, true)['elem'] === undefined) {
-                for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
-                    const metadata = file.navFile((index), true);
-                    metadata['elem'] = ui.loadFile(metadata);
-                    metadata['panzoom'] = ui.createPanzoom(metadata);
-                }
-                console.debug(`preloaded next ${num_files_preload_batch} files`)
-            }
+            if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
+            $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
+            ui.autofitpz(file_metadata, g.fit_type);
+            $(filePlaceholder[i]).find('audio, video').trigger('play');
 
-            //hide filePlaceholder[i], show next file in the next elem, load the file after in the elem after.
-            if (increment === 1) {
-                $(filePlaceholder[i]).removeClass('visible').addClass('hidden');
-                $(filePlaceholder[i]).find('audio, video').trigger('pause');
-                if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
-                $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
-                //reset fit to window/width/height
-                // if (is_tall_and_fit_width) {
-                //     $(filePlaceholder[i].children[0]).css('position', 'initial');
-                // } else {
-                //     $(filePlaceholder[i].children[0]).css('position', '');
-                // }
-                ui.autofitpz(file_metadata);
-                $(filePlaceholder[i]).find('audio, video').trigger('play');
-                if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
-                $(filePlaceholder[i].children[0]).remove();
-                $(filePlaceholder[i]).append(navFile(1, true)['elem']);
-            } else {
-                jumpToFile(currentPos.y, currentPos.x);
-            }
+            if ((i + 1) >= filePlaceholder.length) { i = 0; } else { i += 1 };
+            $(filePlaceholder[i].children[0]).remove();
+            $(filePlaceholder[i]).append(navFile(1, true)['elem']);
+        } else if (increment === -1) {//-1
+            $(filePlaceholder[i]).removeClass('visible').addClass('hidden');
+            $(filePlaceholder[i]).find('audio, video').trigger('pause');
 
-        } else if (increment < 0) {//-
-            if (navFile(-(num_files_preload_batch), true)['elem'] === undefined) {
-                for (let index = num_files_preload_batch; index <= ui.num_files_preload; index++) {
-                    const metadata = file.navFile(-(index), true);
-                    metadata['elem'] = ui.loadFile(metadata);
-                    metadata['panzoom'] = ui.createPanzoom(metadata);
-                }
-                console.debug(`preloaded next ${num_files_preload_batch} files`)
-            }
+            if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
+            $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
+            ui.autofitpz(file_metadata, g.fit_type);
+            $(filePlaceholder[i]).find('audio, video').trigger('play');
 
-            if (increment === -1) {
-                $(filePlaceholder[i]).removeClass('visible').addClass('hidden');
-                $(filePlaceholder[i]).find('audio, video').trigger('pause');
-                if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
-                $(filePlaceholder[i]).removeClass('hidden').addClass('visible');
-                // if (is_tall_and_fit_width) {
-                //     $(filePlaceholder[i].children[0]).css('position', 'initial');
-                // } else {
-                //     $(filePlaceholder[i].children[0]).css('position', '');
-                // }
-                ui.autofitpz(file_metadata);
-                $(filePlaceholder[i]).find('audio, video').trigger('play');
-                if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
-                $(filePlaceholder[i].children[0]).remove();
-                $(filePlaceholder[i]).append(navFile(-1, true)['elem']);
-            } else {
-                jumpToFile(currentPos.y, currentPos.x);
-            }
-
+            if ((i - 1) < 0) { i = filePlaceholder.length - 1; } else { i -= 1 };
+            $(filePlaceholder[i].children[0]).remove();
+            $(filePlaceholder[i]).append(navFile(-1, true)['elem']);
+        } else {
+            jumpToFile(currentPos.y, currentPos.x);
         }
     }
 }
@@ -155,16 +124,7 @@ export function navFile(increment, requireReturn = false) {
 export function navRandomFile() {
     currentPos.y = Math.floor(Math.random() * g.clientFiles.length);
     currentPos.x = Math.floor(Math.random() * g.clientFiles[currentPos.y].length);
-
-    for (let index = -(ui.num_files_preload); index <= ui.num_files_preload; index++) {
-        const metadata = file.navFile(index, true);
-        if (metadata['elem'] === undefined) {
-            metadata['elem'] = ui.loadFile(metadata);
-            metadata['panzoom'] = ui.createPanzoom(metadata);
-        }
-    }
-    console.debug(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
-
+    ui.preload_files();
     tag.loadFiles();
 }
 
@@ -173,15 +133,6 @@ export function jumpToFile(search_number = 0, file_number = 0) {
     if (file_number > g.clientFiles[search_number].length) { file_number = g.clientFiles[search_number].length - 1 }
     currentPos.x = file_number;
     currentPos.y = search_number;
-    for (let index = -(ui.num_files_preload); index <= ui.num_files_preload; index++) {
-        const metadata = file.navFile(index, true);
-        if (metadata['elem'] === undefined) {
-            metadata['elem'] = ui.loadFile(metadata);
-            metadata['panzoom'] = ui.createPanzoom(metadata);
-        }
-    }
-    console.debug(`preloaded ${-(ui.num_files_preload)} to ${ui.num_files_preload} from currentPos [${currentPos.y}][${currentPos.x}]`)
-
+    ui.preload_files();
     tag.loadFiles();
-
 }

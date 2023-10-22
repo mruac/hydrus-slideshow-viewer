@@ -9,8 +9,7 @@
  * - added ability to restrict pan direction with panX and panY
  * - Panzoom instance options can be changed with Panzoom.setOptions()
  * - transformOrigin can now be set to be relative to the panzoom element, instead of the container, using transform.relative
- * - TODO: keep element visibly within container if window is resized.
- * 
+ * - panzoom element can be constrained within container with boundsContain
 */
 
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.panzoom = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
@@ -79,7 +78,7 @@ function createPanZoom(domElement, options) {
   var boundsDisabledForZoom = typeof options.boundsDisabledForZoom === 'boolean' ? options.boundsDisabledForZoom : false
   var maxZoom = typeof options.maxZoom === 'number' ? options.maxZoom : Number.POSITIVE_INFINITY;
   var minZoom = typeof options.minZoom === 'number' ? options.minZoom : 0;
-
+  var boundsContain = typeof options.boundsContain === 'boolean' ? options.boundsContain : false;
   var boundsPadding = typeof options.boundsPadding === 'number' ? options.boundsPadding : 0.05;
   var zoomDoubleClickSpeed = typeof options.zoomDoubleClickSpeed === 'number' ? options.zoomDoubleClickSpeed : defaultDoubleTapZoomSpeed;
   var beforeWheel = options.beforeWheel || noop;
@@ -104,8 +103,6 @@ function createPanZoom(domElement, options) {
   var touchInProgress = false;
   var panX = typeof options.panX === 'boolean' ? options.panX : true;
   var panY = typeof options.panY === 'boolean' ? options.panY : true;
-
-  // //console.log(`panx: ${panX}; pany ${panY}`);
 
   // We only need to fire panstart when actual move happens
   var panstartFired = false;
@@ -271,8 +268,12 @@ function createPanZoom(domElement, options) {
   }
 
   function getTransformModel() {
-    // TODO: should this be read only?
-    return transform;
+    var status = transform;
+    status.bounds = bounds;
+    status.boundsPadding = boundsPadding;
+    status.frameAnimation = frameAnimation;
+    status.moveByAnimation = moveByAnimation;
+    return status;
   }
 
   function getMinZoom() {
@@ -307,6 +308,7 @@ function createPanZoom(domElement, options) {
     // boundsDisabledForZoom              = opts.boundsDisabledForZoom      ? (typeof opts.boundsDisabledForZoom === 'boolean' ? opts.boundsDisabledForZoom : false ): boundsDisabledForZoom;
     maxZoom                            = (typeof opts.maxZoom === 'number') ? opts.maxZoom : maxZoom;
     minZoom                            = (typeof opts.minZoom === 'number') ? opts.minZoom : minZoom;
+    boundsContain                      = typeof opts.boundsContain === 'boolean' ? options.boundsContain : boundsContain;
     // boundsPadding                      = opts.boundsPadding              ? (typeof opts.boundsPadding === 'number' ? opts.boundsPadding : 0.05) : boundsPadding;
     // zoomDoubleClickSpeed               = opts.zoomDoubleClickSpeed       ? (typeof opts.zoomDoubleClickSpeed === 'number' ? opts.zoomDoubleClickSpeed : defaultDoubleTapZoomSpeed) : zoomDoubleClickSpeed;
     // beforeWheel                        = opts.beforeWheel                ? (opts.beforeWheel || noop) : beforeWheel;
@@ -364,8 +366,6 @@ function createPanZoom(domElement, options) {
     transform.y = y;
 
     keepTransformInsideBounds();
-    //console.log(x,y);
-    //console.log(transform);
 
     triggerEvent('pan');
     makeDirty();
@@ -375,40 +375,72 @@ function createPanZoom(domElement, options) {
     moveTo(transform.x + dx, transform.y + dy);
   }
 
-  function keepTransformInsideBounds() {
+  function keepTransformInsideBounds(zoomScale = 1) {
     var boundingBox = getBoundingBox();
     if (!boundingBox) return;
 
     var adjusted = false;
     var clientRect = getClientRect();
 
-    var diff = boundingBox.left - clientRect.right;
-    if (diff > 0) {
-      transform.x += diff;
-      adjusted = true;
-    }
-    // check the other side:
-    diff = boundingBox.right - clientRect.left;
-    if (diff < 0) {
-      transform.x += diff;
-      adjusted = true;
-    }
+    if(boundsContain){
+      //constrain panzoom within container
+      const diff = {
+        left:   boundingBox.left - clientRect.left,
+        right:  boundingBox.right - clientRect.right,
+        top:    boundingBox.top - clientRect.top,
+        bottom: boundingBox.bottom - clientRect.bottom
+      };
 
-    // y axis:
-    diff = boundingBox.top - clientRect.bottom;
-    if (diff > 0) {
-      // we adjust transform, so that it matches exactly our bounding box:
-      // transform.y = boundingBox.top - (boundingBox.height + boundingBox.y) * transform.scale =>
-      // transform.y = boundingBox.top - (clientRect.bottom - transform.y) =>
-      // transform.y = diff + transform.y =>
-      transform.y += diff;
-      adjusted = true;
-    }
+      if (diff.left > 0) {
+        transform.x += diff.left;
+        adjusted = true;
+      }
+      if (diff.right < 0) {
+        transform.x += diff.right;
+        adjusted = true;
+      }
 
-    diff = boundingBox.bottom - clientRect.top;
-    if (diff < 0) {
-      transform.y += diff;
-      adjusted = true;
+      if (diff.top > 0) {
+        transform.y += diff.top;
+        adjusted = true;
+      }
+
+      if (diff.bottom < 0) {
+        transform.y += diff.bottom;
+        adjusted = true;
+      }
+
+      //allows panzoom to zoom out if touching side.
+      if (zoomScale < 1 && adjusted){adjusted = false}
+
+    } else {
+      //prevent panzoom from escaping container
+      const diff = {
+        left:   boundingBox.left - clientRect.right,
+        right:  boundingBox.right - clientRect.left,
+        top:    boundingBox.top - clientRect.bottom,
+        bottom: boundingBox.bottom - clientRect.top
+      };
+
+      if (diff.left > 0) {
+        transform.x += diff.left;
+        adjusted = true;
+      }
+
+      if (diff.right < 0) {
+        transform.x += diff.right;
+        adjusted = true;
+      }
+
+      if (diff.top > 0) {
+        transform.y += diff.top;
+        adjusted = true;
+      }
+
+      if (diff.bottom < 0) {
+        transform.y += diff.bottom;
+        adjusted = true;
+      }
     }
     return adjusted;
   }
@@ -436,6 +468,9 @@ function createPanZoom(domElement, options) {
     return bounds;
   }
 
+  /**
+   * Returns positions of sides relative to container, factoring in current scale.
+   */
   function getClientRect() {
     var bbox = panController.getBBox();
     var leftTop = client(bbox.left, bbox.top);
@@ -484,16 +519,16 @@ function createPanZoom(domElement, options) {
 
     transform.x = size.x - ratio * (size.x - transform.x);
     transform.y = size.y - ratio * (size.y - transform.y);
-
+    
     // TODO: https://github.com/anvaka/panzoom/issues/112
     if (bounds && boundsPadding === 1 && minZoom === 1) {
       transform.scale *= ratio;
       keepTransformInsideBounds();
     } else {
-      var transformAdjusted = keepTransformInsideBounds();
+      var transformAdjusted = keepTransformInsideBounds(ratio);
       if (boundsDisabledForZoom || !transformAdjusted) transform.scale *= ratio
     }
-    //console.log(transform);
+
     triggerEvent('zoom');
 
     makeDirty();
@@ -1072,7 +1107,6 @@ function parseTransformOrigin(options) {
 }
 
 function failTransformOrigin(options) {
-  //console.error(options);
   throw new Error(
     [
       'Cannot parse transform origin.',
@@ -1166,7 +1200,6 @@ function autoRun() {
       return;
     }
     var options = collectOptions(panzoomScript);
-    //console.log(options);
     window[globalName] = createPanZoom(el, options);
   }
 
@@ -1378,7 +1411,6 @@ function makeDomController(domElement, options) {
 
   function applyTransform(transform) {
     // TODO: Should we cache this?
-    //console.log(transform, domElement);
     domElement.style.transformOrigin = '0 0 0';
     domElement.style.transform = 'matrix(' +
       transform.scale + ', 0, 0, ' +
