@@ -128,14 +128,14 @@ const floating_notes_styles = {
         text-shadow: 4px 4px 4px #00ffee;
     }
     `
-}
+};
 
 clientKey = localStorage['clientKey'];
 clientURL = localStorage['clientURL'];
 $.ajaxSetup({
     headers: { 'Hydrus-Client-API-Access-Key': localStorage['clientKey'] },
-    error: function (err) { console.error(err) },
-    success: function (res) { console.debug(res) }
+    error: function (err) { console.error(err); },
+    success: function (res) { console.debug(res); }
 });
 
 if (localStorage['command'] != undefined) { try { $('#command').val(JSON.stringify(JSON.parse(localStorage['command']), null, 4)); } catch { } }
@@ -287,27 +287,38 @@ $('#tagRepositoryList , #displayTagToggle').each(function (i, v) {
     });
 });
 
+// double click toggle panzoom
+$('#fileCanvas').on('dblclick', function (e) {
+    $('#zoomToggle').prop("checked", !$('#zoomToggle').prop("checked"));
+        if ($('#zoomToggle').is(':checked')) {
+        file.navFile(0, true)['panzoom'].resume();
+    } else {
+        file.navFile(0, true)['panzoom'].pause();
+        resetZoom(file.navFile(0, true));
+    }
+});
+
 $('#fileCanvas').on('click', function (e) {
     offcanvasList.forEach((v) => { v.hide(); });
     //prevents media from playing upon mouse swipe
     if (['VIDEO', 'AUDIO'].indexOf(e.target.nodeName) > -1) {
         e.preventDefault();
     }
-})
+});
 
 var pointer_start = null;
 
-$('#fileCanvas').on('mousedown', function (e) {
+$('#fileCanvas').on('mousedown pointerdown', function (e) {
     pointer_start = e;
 });
 
 var prev_pointer;
-$('#fileCanvas').on('mousemove', function (e) {
+$('#fileCanvas').on('mousemove pointermove', function (e) {
     if (prev_pointer === null) { return; }
     prev_pointer = e;
 });
 
-$('#fileCanvas').on('mouseup ', function (e) {
+$('#fileCanvas').on('mouseup pointerup', function (e) {
 
     if (clientFiles.length === 0 || pointer_start === null) { return; }
     //TODO: check if exceed swipeable region of pan and filenav in that direction. aka "force swipe"
@@ -497,7 +508,7 @@ $('.menu-submenu').on('click', function (e) {
 
 export function loading_error() {
     $('.progress').show().removeClass('border-secondary').addClass('border-danger');
-    $('.progress-bar').removeClass('bg-secondary').addClass('bg-danger')
+    $('.progress-bar').removeClass('bg-secondary').addClass('bg-danger');
 
     setTimeout(() => {
         $('#progress_bar').hide();
@@ -530,7 +541,7 @@ $('#submitButton').on('click', async function () {
     $('#progress_bar').show();
     $('#progress_bar_status span').remove();
     $('.progress').removeClass('border-danger').addClass('border-secondary');
-    $('.progress-bar').removeClass('bg-danger').addClass('bg-secondary')
+    $('.progress-bar').removeClass('bg-danger').addClass('bg-secondary');
     $('.progress-bar').css('width', `0%`);
     $('.popup').addClass('d-none');
     $('#zoomToggle').prop('checked', false);
@@ -541,7 +552,7 @@ $('#submitButton').on('click', async function () {
     file.currentPos.y = 0;
     clientFiles = [];
     client_named_Searches = [];
-    const order = sort_val_to_sort_int[$('#sort_order').val()]
+    const order = sort_val_to_sort_int[$('#sort_order').val()];
 
     try {
         var input = JSON.parse($('#command').val());

@@ -217,7 +217,9 @@ export function createPanzoom(metadata) {
         panY: true,
         transformOrigin: { x: 0.5, y: 0.5, relative: true },
         boundsPadding: 0.4, //don't exceed the half of container (0.5) to prevent zoom issues
-        boundsDisabledForZoom: true
+        boundsDisabledForZoom: true,
+        onDoubleClick: ()=>{return false;},
+        zoomDoubleClickSpeed: 1
         // bounds: {
         //     top: 0,
         //     left: 0,
